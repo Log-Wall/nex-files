@@ -4,6 +4,8 @@ sidebar_label: Upgrading from v3
 description: Prepare your Nexus client and remove incompatible v3 packages before installing nexSys4, nexGui4, nexMap4, and nexBash4.
 ---
 
+import { DROPBOX_V4_DOWNLOADS_URL } from "@site/src/data/links";
+
 # Upgrading from Version 3
 
 This guide is for players who already have version 3 nex\* packages
@@ -88,7 +90,7 @@ browser tab, so the version 4 packages start from a clean slate.
 
 ## Recommended install order
 
-Install version 4 packages in this order:
+Grab the `.nxs` files you need from the <a href={DROPBOX_V4_DOWNLOADS_URL}>version 4 Dropbox folder</a>, then install version 4 packages in this order:
 
 1. **nexSys4** — every other package builds on its character state.
 2. **nexGui4** *(if you use it)* — reset your layout first, per step 3 above.
@@ -108,3 +110,19 @@ If you need to fall back to your version 3 setup, use the **Import/Export**
 menu's import option with the file you saved in step 1.
 
 :::
+
+## Where your customizations live
+
+Every version 4 package's `.nxs` file includes a dedicated group named
+`<package id>.userSettings` — for example, `nexGui4` includes a
+`nexGui.userSettings` group. This is the one part of the file that automatic
+updates will never overwrite.
+
+Use the `userSettings` group to add your own aliases, triggers, and similar
+customizations. Because it is excluded from updates, anything you put there is
+preserved when a package ships a new version.
+
+Every other group in the `.nxs` file is managed by the package itself and will
+be overwritten automatically as updates become available, so avoid making
+manual changes outside of `userSettings` — those changes will be lost the next
+time the package updates.
