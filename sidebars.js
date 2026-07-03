@@ -6,6 +6,7 @@ const sidebars = {
     "index",
     "getting-started",
     "packages",
+    "upgrading-to-v4",
     "ecosystem",
     {
       type: "category",

@@ -55,9 +55,11 @@ delivered differs.
 
 ## Travel classes
 
-Beyond plain walking, the graph models special-travel edges. Each edge type is a
-**travel class** that can be enabled or disabled; a disabled class is pruned from
-pathfinding (its edges are given infinite weight at query time).
+Beyond plain walking, the graph models special-travel edges. Optional edge types
+are **travel classes** that can be enabled or disabled; a disabled class is
+pruned from pathfinding (its edges are given infinite weight at query time).
+Core travel classes such as `nurRift` are always available and are not
+configuration toggles.
 
 | Travel class | Notes |
 | --- | --- |
@@ -72,10 +74,10 @@ pathfinding (its edges are given infinite weight at query time).
 | `gare` | Gare travel. |
 | `urn` | Urn travel. |
 | `pebble` | Pebble travel. |
-| `nurRift` | Nur rift travel. |
+| `nurRift` | Nur rift travel. Always available; not configurable. |
 
-Most classes are **disabled by default** — enable the ones your character can
-actually use, either in the dialog or with a toggle:
+Most optional classes are **disabled by default** — enable the ones your
+character can actually use, either in the dialog or with a toggle:
 
 ```js
 nexMap.api.travel.enable("clouds");      // eagleWings + atavianWings
