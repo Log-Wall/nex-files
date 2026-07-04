@@ -42,7 +42,7 @@ the shipped definition or a sibling area.
 
 While a run is live, the bash machine drives a loop: scan the room, check whether it is contested by non-party players, build and rank the target list, and fight until clear.
 
-If you move to a new room (by walking or using a separate pathing command), nexBash detects the room change, scans the new room, and automatically resumes combat if valid targets are present. In **slow mode** (`nb slow`), nexBash stays active in the current room waiting for respawns.
+If you move to a new room (by walking or using a separate pathing command), nexBash detects the room change, scans the new room, and automatically resumes combat if valid targets are present.
 
 ## Adding your own area and targets
 
@@ -70,9 +70,7 @@ Areas passed this way are ephemeral — they are made live but not added to
 
 ## Discovery
 
-As nexBash fights, class strategies that probe (for example Magi) record what they
-learn about each mob — its **damage types** and **resistances** — onto the active
-area's NPC entry. Subsequent attacks then avoid resisted damage types
-automatically. Discoveries are de-duplicated per run, reported when the run ends,
-and persisted with the area so the knowledge carries forward. See
-[Session & automations](./session-and-automations.md).
+As nexBash fights, class strategies that probe (for example Magi) record observed
+damage ranges for each mob and damage type. Discoveries are de-duplicated per
+run and reported when the run ends so you can vet the data before editing NPC
+flags such as resistances. See [Session & automations](./session-and-automations.md).

@@ -41,8 +41,8 @@ At the core of nexBash4 is an XState v5 state machine (`nexbash-bash`) that mana
   razes, crowd control, and damage within configured reserves.
 - **Keeps you safe** — flies, flees, shields, razes, swaps off shielded targets,
   and runs effect automations (bloodcloak, morimbuul, and more).
-- **Discovers mob data** — probes damage types and resistances during combat and
-  remembers them per area.
+- **Reviews mob data** — records observed damage ranges during combat so you can
+  vet NPC flags per area.
 - **Scores the run** — tracks kills, gold, and elapsed time, and reports a
   summary when a run ends.
 

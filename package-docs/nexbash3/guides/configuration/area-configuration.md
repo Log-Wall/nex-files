@@ -70,10 +70,10 @@ flags or nexBash discovers data about it during combat.
 
 ### Discovered data
 
-Some facts are learned automatically rather than configured. As nexBash fights, it
-probes mob **damage types** and **resistances** and records them on the area's NPC
-entry, so later runs avoid resisted attacks. These discoveries are reported at the
-end of a run and persisted with the area. See [Areas](../areas.md) and
+Some facts are easier to review after live combat. As nexBash fights, probing
+strategies record observed damage ranges per mob and damage type. These
+discoveries are reported at the end of a run so you can decide which NPC flags to
+save. See [Areas](../areas.md) and
 [Session & automations](../session-and-automations.md).
 
 ### Saving

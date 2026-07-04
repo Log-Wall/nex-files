@@ -15,7 +15,6 @@ is `nb <verb> [args]`. Type `nb help` in the client for the live list.
 | `nb start` | Start bashing. Resolves the area for your location, enables the Bashing reflex group, starts the run scoreboard, and begins navigating and fighting. |
 | `nb stop` | Stop bashing. Disables reflexes, drops the target list, restores curing defaults, and reports the run summary. |
 | `nb clear` / `nb reset` | Reload the current area definition and (re)start bashing. Use this after editing targets so the live run picks up the change. |
-| `nb slow` | Toggle slow mode. In slow mode nexBash waits for respawns in a room instead of advancing once it is clear. |
 
 ## Configuration
 

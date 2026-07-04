@@ -69,7 +69,6 @@ Other run commands:
 | --- | --- |
 | `nb stop` | Stop bashing and report the run summary. |
 | `nb clear` | Reload the current area and (re)start — useful after editing targets. |
-| `nb slow` | Toggle slow mode (wait for respawns instead of advancing). |
 
 See the full list in the [Commands guide](../guides/commands.md).
 
@@ -78,7 +77,7 @@ See the full list in the [Commands guide](../guides/commands.md).
 While running, inspect a read-only snapshot in the console:
 
 ```js
-nexBash.state.system;   // { version, enabled, slow }
+nexBash.state.system;   // { version, enabled }
 nexBash.state.area;     // { id, name, targetThreshold }
 nexBash.state.combat;   // { hasTarget, target, targetCount }
 nexBash.state.session;  // { kills, gold, elapsedMs }

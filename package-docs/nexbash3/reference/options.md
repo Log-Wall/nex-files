@@ -16,8 +16,9 @@ the in-dialog walkthrough see the [Options tab guide](../guides/configuration/op
 | --- | --- | --- |
 | `notices` | `true` | Show nexBash status notices (target swaps, area-cleared, `nb` output) in the client. |
 | `rageToRaze` | `true` | Spend battlerage to raze a target's shield instead of waiting it out. |
+| `skipNonPartyRooms` | `true` | Move on instead of attacking when an unclaimed room already contains players outside your party. |
 | `swapOnShield` | `true` | When the current target raises a shield, switch to another valid target. |
-| `useMorimbuul` | `true` | Draw morimbuul before engaging mobs that can web you. |
+| `useMorimbuul` | `false` | Draw morimbuul before engaging mobs that can web you. |
 | `logging` | `false` | Emit additional diagnostic log output. Dev-only; not surfaced in the dialog. |
 
 These flow into the per-tick decision context as `ctx.config.*`, so actions read
@@ -53,7 +54,7 @@ Current shape (`schemaVersion` 2):
 {
   "schemaVersion": 2,
   "updatedAt": "2026-06-25T12:00:00.000Z",
-  "options": { "notices": true, "rageToRaze": true, "swapOnShield": true, "useMorimbuul": true },
+  "options": { "notices": true, "rageToRaze": true, "skipNonPartyRooms": true, "swapOnShield": true, "useMorimbuul": false },
   "battlerage": { "shieldBuffer": 17, "ccBuffer": 35, "generalBuffer": 48 },
   "areas": {
     // keyed by a stable areaKey derived from id (or name)

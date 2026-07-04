@@ -19,10 +19,11 @@ persisted settings. Defaults shown.
 | --- | --- | --- |
 | In-game notices | On | Show nexBash status notices (target swaps, area-cleared, `nb` output) in the client. |
 | Use rage to raze | On | Spend battlerage to raze a target's shield instead of waiting it out. |
+| Skip non-party rooms | On | Move on instead of attacking when an unclaimed room already contains players outside your party. |
 | Swap on shield | On | When the current target raises a shield, switch to another valid target. |
-| Use morimbuul | On | Draw morimbuul before engaging mobs flagged as able to web you. |
+| Use morimbuul | Off | Draw morimbuul before engaging mobs flagged as able to web you. |
 
-These map to `nexBash.options.{notices, rageToRaze, swapOnShield, useMorimbuul}`.
+These map to `nexBash.options.{notices, rageToRaze, skipNonPartyRooms, swapOnShield, useMorimbuul}`.
 The dev-only `logging` flag exists in the option set but is intentionally not
 surfaced in the dialog. See the [Options reference](../../reference/options.md).
 

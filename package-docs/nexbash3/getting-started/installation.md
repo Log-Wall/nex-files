@@ -14,17 +14,16 @@ nexBash4 is a combat layer on top of other Nexus packages. The following must be
 present (they are declared as peer dependencies and are never bundled into
 nexBash):
 
-| Package | Role |
-| --- | --- |
-| **nexSys4** (`nexsys`) | Character, affliction, defence, balance state and command queues. **Required.** |
-| **nexEvent** (`nexevent`) | The `eventStream` pub/sub bus nexBash listens and emits on. |
-| **nexAction** (`nexaction`) | The `nexAction` text-trigger engine nexBash uses for game-line triggers. |
+| Package                   | Role                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| **nexSys4** (`nexsys`)    | Character, affliction, defence, balance state and command queues. **Required.** |
+| **nexEvent** (`nexevent`) | The `eventStream` pub/sub bus nexBash listens and emits on.                     |
 
 These optional host packages enrich behavior when present:
 
-| Package | Adds |
-| --- | --- |
-| **nexMap** | Pathing and area-change detection. |
+| Package    | Adds                                                   |
+| ---------- | ------------------------------------------------------ |
+| **nexMap** | Pathing and area-change detection.                     |
 | **nexGui** | Party awareness (leader/membership) for group bashing. |
 
 Install and verify [nexSys4](../../nexSys/getting-started/installation.md) first.
@@ -77,7 +76,7 @@ Confirm a strategy was selected for your class and the supported set:
 
 ```js
 nexBash.currentStrategy?.id; // e.g. "magi", or null on an unsupported class
-nexBash.supportedClasses;    // ["magi", "occultist", "red dragon", ...]
+nexBash.supportedClasses; // ["magi", "occultist", "red dragon", ...]
 ```
 
 Open the configuration dialog from the in-game command line:

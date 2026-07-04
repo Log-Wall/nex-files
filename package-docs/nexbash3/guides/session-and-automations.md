@@ -26,22 +26,23 @@ nexBash.state.session;
 // { kills: 18, gold: 2400, elapsedMs: 305000 }
 ```
 
-When a run ends, nexBash prints a one-line summary (and a discovery summary if
-anything new was learned). The scoreboard zeroes out once stopped, until the next
-`nb start`.
+When a run ends, nexBash prints a one-line scoreboard summary. The scoreboard
+zeroes out once stopped, until the next `nb start`.
 
 ## Discovery
 
-While fighting, probing strategies record facts about each mob — its **damage
-types** and **resistances** — onto the active area's NPC entry. This drives two
-things: attacks automatically avoid a damage type the target resists, and the
-knowledge is persisted with the area so later runs start informed.
+While fighting, probing strategies record observed damage ranges for each mob and
+damage type. Rather than crowding the chat notice, the end-of-run discovery
+report — resistances, damage types, observed damage ranges, and damage taken,
+grouped per NPC — is written to the browser dev console as a table
+(`console.table`) so you can review and vet the data before marking any NPC
+flags such as resistances.
 
 Discoveries are de-duplicated per run (by area, NPC, field, and value), reported
 at the end of the run, and surfaced on the `nexbash4.discovery.recorded` and
 `nexbash4.discovery.report` [events](../reference/events.md). The
-[Area Configuration](./configuration/area-configuration.md) tab shows the resulting
-NPC data.
+[Area Configuration](./configuration/area-configuration.md) tab is where vetted
+NPC data is edited.
 
 ## Safety and effect automations
 

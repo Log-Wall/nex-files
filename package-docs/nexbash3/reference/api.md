@@ -12,7 +12,7 @@ lifecycle helpers and accessors also live directly on the global.
 
 | Namespace | Purpose | Methods |
 | --- | --- | --- |
-| `api.control` | Run lifecycle and run-control flags | `start`, `stop`, `toggleSlow`, `enableLokiCheck` |
+| `api.control` | Run lifecycle and run-control flags | `start`, `stop`, `enableLokiCheck` |
 | `api.config` | Area / NPC configuration | `setArea`, `addArea`, `addNpc` |
 | `api.observe` | Report observed game-state into the owned models | `npc.shield.*`, `npc.cc.*`, `self.effects.*`, `self.battlerage.*` |
 | `api.strategy` | Strategy profile management | `profiles.list`, `profiles.active`, `profiles.apply`, `profiles.save`, `profiles.remove` |
@@ -26,7 +26,6 @@ actor — there is intentionally no separate enable/disable.
 ```js
 nexBash.api.control.start();        // resolve the area for this location, go live
 nexBash.api.control.stop();         // go inert; report the run summary
-nexBash.api.control.toggleSlow();   // flip slow mode; returns the new value
 nexBash.api.control.enableLokiCheck(); // arm a one-shot Loki affliction probe
 ```
 

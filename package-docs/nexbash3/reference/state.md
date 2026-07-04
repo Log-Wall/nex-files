@@ -24,7 +24,7 @@ UI, debug overlays, logging, and integrations.
 
 | Branch | Value | Contents |
 | --- | --- | --- |
-| `state.system` | object | `version`, `enabled` (a run is live), `slow` (slow mode on). |
+| `state.system` | object | `version`, `enabled` (a run is live). |
 | `state.area` | object | Active area `id`, `name`, and `targetThreshold`. |
 | `state.strategy` | object | Active class strategy `id` (`null` on an unsupported class). |
 | `state.combat` | object | `hasTarget`, the active `target` (`{ id, name }` or `null`), and `targetCount`. |
@@ -37,14 +37,14 @@ UI, debug overlays, logging, and integrations.
 
 ```js
 {
-  system:   { version: "1.0.0", enabled: true, slow: false },
+  system:   { version: "1.0.0", enabled: true },
   area:     { id: 137, name: "Tuar", targetThreshold: 5 },
   strategy: { id: "magi" },
   combat:   { hasTarget: true, target: { id: 4821, name: "a tuar warrior" }, targetCount: 3 },
   session:  { kills: 18, gold: 2400, elapsedMs: 305000 },
   effects:  { bloodcloak: false, maya: false, deathcape: true },
   battlerage: { balance: true, shieldBuffer: 17, ccBuffer: 35, generalBuffer: 48 },
-  options:  { rageToRaze: true, swapOnShield: true, useMorimbuul: true, logging: false, notices: true }
+  options:  { rageToRaze: true, swapOnShield: true, skipNonPartyRooms: true, useMorimbuul: false, logging: false, notices: true }
 }
 ```
 

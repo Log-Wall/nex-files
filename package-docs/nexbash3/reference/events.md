@@ -42,8 +42,11 @@ rely on them.
 
 | Topic | Payload | Emitted when |
 | --- | --- | --- |
-| `nexbash4.area.cleared` | the active `Area` | The bashing run completed (for routed areas). |
-| `nexbash4.discovery.recorded` | `{ areaKey, areaName, npc, field, value, source }` | A new mob fact (damage type / resistance) was discovered mid-run. |
+| `nexbash4.started` | `{ area }` | A run went live. Fires once per run (not on an actor-reuse restart), so it pairs 1:1 with `nexbash4.stopped`. |
+| `nexbash4.stopped` | `{ area, summary }` | A run went inert on **any** route — manual `stop()`, a STOP event, or area-clear self-completion. Fires once per run; `summary` is the final `{ kills, gold, elapsedMs }` scoreboard. |
+| `nexbash4.area.cleared` | the active `Area` | The bashing run completed (for routed areas). Precedes the run's `nexbash4.stopped`. |
+| `nexbash4.room.cleared` | `GMCP.Room.Info` | The current room holds no targets — a fresh room with nothing spawned yet, or the last target just died. Fires every time `checkingForTargets` confirms this, so it may repeat for the same room. |
+| `nexbash4.discovery.recorded` | `{ areaKey, areaName, npc, field, value, source }` | A new mob observation was recorded mid-run, such as an observed damage range. |
 | `nexbash4.discovery.report` | `{ reason, area, discoveries }` | A run ended (`reason` is `"manualStop"` or `"areaClear"`); reports the run's discoveries. |
 | `nexbash4.quest.chain.complete` | none | A scripted quest chain finished. |
 

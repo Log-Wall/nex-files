@@ -23,8 +23,8 @@ Each shipped strategy is:
 - A `config` object of class-level bool/int knobs (often empty).
 - An optional **ingestion lifecycle** (`activate` / `deactivate`) for the few
   classes that learn facts during combat — for example, Magi registers listeners
-  that probe each staff cast's damage to discover a mob's best element and
-  resistances.
+  that record each staff cast's observed damage, helping choose a best element
+  and giving you low/high damage ranges to review.
 
 The supported set out of the box: **Magi**, **Occultist**, **Red Dragon**, **Blue
 Dragon**, **Golden Dragon**, **Fire Lord**. Confirm the live set with `nb help` or
