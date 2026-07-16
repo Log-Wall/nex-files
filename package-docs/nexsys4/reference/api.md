@@ -21,7 +21,7 @@ domain live together; data snapshots remain under `nexSys.state`.
 | `api.command` | Command dispatch and output-cycle work | `send`, `sendInline`, `addOutput`, `evaluateNow` |
 | `api.control` | Runtime and persisted settings | `pause`, `unpause`, `setSlowMode`, `applySettings`, `start`, `stop` |
 | `api.queue` | Named command queues | `list`, `inspect`, `get`, `add`, `prepend`, `clearQueue`, `flush` |
-| `api.prompt` | Prompt rendering and customization | `render`, `patchVars`, `applyPreset`, `markPromptDirty` |
+| `api.prompt` | Prompt rendering and customization | `set`, `reset`, `updateVars`, `updateAffs`, `updateCureColors` |
 | `api.observe` | Explicit observed state transitions | Affliction, defence, balance, limb, and mount handles |
 | `api.ui` | Configuration dialog | `openConfig`, `closeConfig`, `setConfigOpen` |
 | `api.line` | Nexus output-line helpers | `replace`, `replaceHTML`, `nextLine`, `prependNotice`, `say` |
@@ -41,6 +41,7 @@ nexSys.api.defs.defup();
 
 // Send commands and use a named queue
 nexSys.api.command.send("stand");
+nexSys.api.command.send("block troll", true); // bypass Nexus alias expansion
 nexSys.api.queue.free.add("touch tree");
 
 // Update target state through the supported path

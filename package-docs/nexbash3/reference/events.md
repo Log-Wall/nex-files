@@ -50,6 +50,18 @@ rely on them.
 | `nexbash4.discovery.report` | `{ reason, area, discoveries }` | A run ended (`reason` is `"manualStop"` or `"areaClear"`); reports the run's discoveries. |
 | `nexbash4.quest.chain.complete` | none | A scripted quest chain finished. |
 
+### Effect availability
+
+The life-force talisman effects (bloodcloak, deathcape, maya) announce when they
+become usable and when they go away. These are the high-level semantic topics a
+display attaches to; the payload is the effect name.
+
+| Topic | Payload | Emitted when |
+| --- | --- | --- |
+| `nexbash4.effect.got` | `"bloodcloak"` \| `"deathcape"` \| `"maya"` | The effect became available. Fires once on the availability edge, not on each recharge (the timer's `*.started.<id>` topic marks recharges). |
+| `nexbash4.effect.lost` | the effect name | The effect was consumed or its hold expired. Fires once, whichever edge (game text or the expiry timer) came first. |
+| `nexbash4.effect.charged` | `{ name, charges, max }` | A charge accrued. Only deathcape reports a running count (`0`→`50`); it fires on **every** kill line (even at full), carrying the authoritative count for a counter display. Bloodcloak and maya are binary availability and never emit this. |
+
 ### Effect timers
 
 The transient-effect expiry timers (bloodcloak, maya, deathcape) emit a scoped
@@ -76,9 +88,10 @@ context — they are owned by those packages, not by nexBash.
 | --- | --- |
 | `nexsys4.system.class.changed` | Re-select the class strategy. |
 | `nexmap4.area.changed` | Resolve and apply the area for the new location. |
-| `IRE.Misc.Achievement` | Update the session kill count and re-arm effect timers. |
+| `IRE.Misc.Achievement` | Update the session kill count and collect gold. |
 | `IRE.Target.Info` | Update the active target's HP. |
-| `nexSkillMatch.<skill>` | Track crowd-control landing on a target (stormbolt, dilation, ague, scorch, psidaze, deaden, temperance, stagnate, cleanseaura). |
+| `nexskill.match.skill.<skill>.<id>` | Track crowd-control landing on a target (stormbolt, dilation, ague, scorch, psidaze, deaden, temperance, stagnate, cleanseaura, boinad, curse). |
+| `nexskill.match.npc` | Record NPC damage received during an active run. |
 | `nexsys4.aff.got` / `nexsys4.aff.lost` | Drive the bloodcloak → bloodshield automation. |
 | `nexsys4.def.got.bloodshield` / `.lost.bloodshield` | Drive the bloodcloak automation. |
 | `PromptEvent` | One-shot Loki affliction probe and gold collection. |
@@ -93,7 +106,7 @@ on exit:
 | --- | --- |
 | `PromptEvent` | Per-prompt attack selection. |
 | `battlerageUpdate` / `nexsys4.def.got.freerage` / `nexsys4.system.rage.changed` | Re-run autonomous battlerage selection. |
-| `nexSkillMatch` | Track razes and battlerage ability/balance consumption. |
+| `nexskill.match` | Track skill razes and battlerage ability/balance consumption; NPC matches on the same generic topic are ignored unless they carry `action.skill`. |
 | `IRE.Display.ButtonActions` | Track per-ability battlerage availability. |
 | `nexsys4.item.room.added` / `.removed` | Detect a mob entering or the target leaving/dying. |
 | `nexmap4.room.changed` / `nexmap4.pathing.start` / `nexmap4.pathing.complete` | Drive room re-scan and pathing updates. |

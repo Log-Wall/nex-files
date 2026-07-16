@@ -28,8 +28,8 @@ baseline without destroying the player's saved configuration.
 - `baseline` and `sessionBaseline` describe the stable intent.
 - `desired` is the result after active overlays are applied.
 - `observed` records what nexSys4 has confirmed from Achaea.
-- `transient` contains temporary predictions, prioritized afflictions, and
-  manual queue state.
+- `transient` contains one-shot prediction requests, prioritized afflictions,
+  and manual queue state.
 - `pending` records work awaiting confirmation.
 
 Most users should configure curing through the dialog. Integrations can use

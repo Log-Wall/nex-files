@@ -1,109 +1,135 @@
 ---
 title: The decision model
-description: How nexBash4 chooses what to do each prompt — lanes, gates, and first-valid selection.
+description: How nexBash4 chooses what to do each prompt using lanes, gates, and explicit tuning.
 ---
 
 # The decision model
 
 Everything nexBash does in combat comes down to one idea: on each game prompt it
 walks a **priority lane** top-to-bottom and uses the **first action that is legal
-right now**. This page explains that loop, and where the idea of "rules" fits.
+right now**.
 
 ## The pieces
 
 | Piece | What it is |
 | --- | --- |
-| **Action** | One ability: `{ id, queue, canExecute(ctx), execute(ctx) }`. `canExecute` is a pure yes/no gate; `execute` returns the command(s) to send. |
-| **Lane** | A curated, ordered list of actions. The order *is* the priority. nexBash classes have a `primary` lane and (usually) a `battlerage` lane. |
-| **Strategy** | A class expressed as data: its lanes plus a small config object. See [Strategies](./strategies.md). |
-| **Context (`ctx`)** | A fresh, per-prompt bundle of *answers* — derived tactical facts and player-state predicates — that every gate reads. |
-| **Selector** | The "first-valid" walk over a lane that produces the chosen action. |
+| **Action** | One ability: `{ id, queue, canExecute(ctx, tuning), execute(ctx, tuning) }`. `canExecute` is a pure yes/no gate; `execute` returns commands. |
+| **Lane** | A curated, ordered list of catalog keys. The order *is* the priority. Strategies have a `primary` lane and usually a `battlerage` lane. |
+| **Strategy** | A class expressed as data: its lanes plus optional profile-scoped shared args. See [Strategies](./strategies.md). |
+| **Context (`ctx`)** | A fresh per-tick bundle of tactical answers and player-state predicates. |
+| **Action tuning** | A precomputed `{ strategy, action }` envelope containing the active profile's two configuration scopes. |
+| **Selector** | The first-valid walk over a lane that produces the chosen action and its tuning. |
 
 ## The loop
 
-On every prompt, while in combat:
+On every prompt while in combat:
 
-1. nexBash builds a fresh **decision context** for this instant.
+1. nexBash builds one fresh decision context.
 2. It walks the active strategy's `primary` lane in order.
-3. For each action it asks `canExecute(ctx)`. The first action that answers `true`
-   is chosen; the rest are skipped.
-4. The chosen action's `execute(ctx)` produces a command, which nexBash queues.
+3. For each catalog key it reads that key's precomputed tuning and asks
+   `canExecute(ctx, tuning)`.
+4. The first action that answers `true` wins. Its `execute(ctx, tuning)` receives
+   the exact same tuning object and returns the commands to queue.
+5. If a coupled battlerage is ready, nexBash selects it through the same keyed
+   tuning path and fuses it into the attack command stack.
 
-The battlerage lane runs the same way on its own trigger (rage/freerage changes).
-See [Battlerage](./battlerage.md).
+Autonomous battlerages run an independent first-valid pass when rage/freerage
+state changes. See [Battlerage](./battlerage.md).
 
-:::note Execution Machine
-The prompt-level combat decision loop runs entirely within the `combat` state of the core state machine. To see how combat fits into the overall room-navigation and player-detection loop, see the [Overview](../introduction.md#the-state-machine) for the complete visual state chart.
+:::note Execution machine
+The prompt and battlerage handlers run within the `combat` state of the core
+state machine. See the [Overview](../introduction.md#the-state-machine) for the
+complete state chart.
 :::
 
-Because selection is a fresh walk every prompt, priority is an *order of
-preference*, not a fixed script: a high-priority ability that isn't currently
-legal (off balance, wrong target state, a resisted damage type) is passed over in
-favor of the next valid one, automatically.
+Because selection is a fresh walk each tick, priority is an order of preference,
+not a fixed script. A high-priority ability that is not currently legal is passed
+over in favor of the next valid one.
+
+## The two tuning scopes
+
+Profile configuration is deliberately separate from the per-tick context. Every
+catalog key receives an explicit `ActionTuning` envelope:
+
+```js
+{
+  strategy: { daggerId: "59237", scytheId: "330399" },
+  action: { hp: 0.3 },
+}
+```
+
+- `tuning.strategy` contains values owned by the whole strategy/profile, such as
+  shared equipment identities.
+- `tuning.action` contains values owned by one catalog action, such as that
+  action's HP threshold.
+
+The scopes may use the same property name without colliding. Actions never read
+`nexBash.currentStrategy` to find configuration. When a profile is applied,
+nexBash derives immutable tuning objects and keyed lane entries for the effective
+lanes. Prompt and rage selection then perform reads over that precomputed state;
+they do not merge tuning per candidate. The winning reference is passed unchanged
+to execution.
+
+Actions with no declared values still receive stable empty `strategy` and
+`action` objects. This keeps the invocation contract uniform without adding work
+to the hot path.
 
 ## The decision context
 
-`canExecute(ctx)` is the entire "brain" of an action, and it is **pure** — it
-reads only the context, never host globals, and has no side effects. The context
-is the single place that reads nexSys, nexGui, GMCP, and the target model and
-turns them into answers. The most useful fields:
+`canExecute(ctx, tuning)` is the entire situational brain of an action, and it is
+**pure**: it reads only the context and static tuning, never host globals, and has
+no side effects. The context is the adapter that reads nexSys, nexGui, GMCP, and
+the target model and turns them into answers.
 
 | Field | Meaning |
 | --- | --- |
-| `ctx.target` | Active target facts: `id`, `name`, `hp` (0–100%), `shielded`, `shouldCC`, `cc`, `resistances`, `damageTypes`, `damage`, `canHeal`. |
+| `ctx.target` | Active target facts: `id`, `name`, `hp` (0-100%), `totalHp`, `shielded`, `shouldCC`, `cc`, `resistances`, `damageTypes`, and `canHeal`. |
 | `ctx.hasTarget` / `ctx.targetCount` | Whether a target exists and how many mobs are in the room. |
-| `ctx.aoeTargetIds` | Unshielded mob ids — the candidates for multi-target abilities. |
-| `ctx.hitsToKill` / `ctx.killableThisHit` | Estimated hits to finish the target (Infinity if unknown). |
-| `ctx.party` | Party `members`, `leader`, `size`, `isMember`, `isLeader`. |
-| `ctx.haveAff` / `ctx.haveAnyAff` / `ctx.haveDef` / `ctx.haveBal` / `ctx.isClass` | Player-state predicates that delegate live to nexSys4. |
-| `ctx.selfHp` / `ctx.selfMana` | Self vitals as 0–1 ratios. |
+| `ctx.aoeTargetIds` | Unshielded mob IDs available to multi-target abilities. |
+| `ctx.party` | Party `members`, `leader`, `size`, `isMember`, and `isLeader`. |
+| `ctx.enabled(key)` | Whether a catalog key belongs to an effective lane. |
+| `ctx.haveAff` / `ctx.haveAnyAff` / `ctx.haveDef` / `ctx.haveBal` / `ctx.isClass` | Player-state predicates delegated to nexSys4. |
+| `ctx.selfHp` / `ctx.selfMana` | Self vitals as 0-1 ratios. |
 | `ctx.rage` / `ctx.spark` / `ctx.transcendence` | Class resource pools. |
-| `ctx.battlerage` | Battlerage facts: `balance`, `freerage`, `matic`, the buffers, `razeReady`. |
-| `ctx.room` | `canFly`, `canBurrow`, `fleeDirection` for movement defences. |
-| `ctx.config` | The player [option flags](./configuration/options.md) plus the area `targetThreshold`. |
+| `ctx.wielded` | The character's currently wielded items. |
+| `ctx.battlerage` | Battlerage balance, live flags, configured buffers, and `razeReady`. |
+| `ctx.room` | Environment answers such as `canFly`, `canBurrow`, and `fleeDirection`. |
+| `ctx.config` | Global player [options](./configuration/options.md) plus the active area's `targetThreshold`. |
 
-A damaging action is automatically rejected before its own gate runs if the
-active target **resists** the action's damage type — which is how a class
-"settles" on the best element after probing (see [Strategies](./strategies.md)).
+`ctx.config` remains the adapter for global options and active-area facts. It is
+not a strategy-profile configuration channel; those values belong in
+`ActionTuning`.
+
+A damaging action is rejected before its local gate when the active target
+resists the action's damage type.
 
 ## The action catalog
 
-Every ability lives in a flat, namespaced **catalog**, keyed like `magi.erode`,
-`battlerage.disintegrate`, `general.fly`. Lanes reference these keys, and the
-config UI's "Available" bench is drawn from the keys flagged for your class. You
-can inspect the catalog from the console:
+Every ability lives in a flat, namespaced catalog, keyed like `magi.erode`,
+`battlerage.disintegrate`, or `general.fly`. Lanes reference these keys, and the
+configuration bench is drawn from keys available to the selected class.
 
 ```js
 nexBash.actionCatalog.list({ namespace: "magi" });
 nexBash.actionCatalog.get("magi.dissolution");
 ```
 
-## Where "rules" fit
+## Where rules fit
 
-If you are coming from a curing-style system, you might expect a per-tick **rules
-engine** that overlays priority changes when conditions are met. nexBash
-deliberately does **not** use one in its core. The job a rules engine would do —
-"use this ability only when these conditions hold" — is expressed directly and
-more cheaply as each action's pure `canExecute(ctx)` gate over a rich context,
-resolved by the first-valid walk. There is no priority mutation at runtime.
-
-A general-purpose rule registry (lifecycle + ordered evaluation with
-activate/deactivate transitions) exists in the codebase as **reserved**
-infrastructure for a future need that genuinely cannot be expressed as a gate. It
-is intentionally **not wired into** the runtime, machines, or strategies today, so
-it is not part of the public contract. If and when it is adopted, it will be
-documented here.
+nexBash does not use a per-tick rules engine to mutate priorities. The condition
+"use this ability only when these facts hold" lives directly in each pure gate,
+and first-valid resolves the ordered lane. A general rule registry exists as
+reserved infrastructure but is not wired into the runtime or public contract.
 
 ## Seeing why an action was chosen
 
-A **decision trace** can record each selection pass — what was considered and why
-the winner won — for debugging or a config overlay. It is off by default so the
-hot path stays free:
+A decision trace can record each selection pass for debugging. It is off by
+default so the hot path stays free:
 
 ```js
 nexBash.trace.enable();
-// …fight for a bit…
-nexBash.trace.list();   // inspect the recent decisions
+// fight for a bit
+nexBash.trace.list();
 nexBash.trace.disable();
 ```
 

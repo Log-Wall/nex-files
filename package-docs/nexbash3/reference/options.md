@@ -1,117 +1,162 @@
 ---
 title: Options & settings
-description: Player option flags, battlerage reserves, and the persisted settings document.
+description: Global options, battlerage reserves, and the self-healing persisted settings document.
 ---
 
 # Options & settings
 
-This page documents the player-tunable values and the on-disk settings shape. For
-the in-dialog walkthrough see the [Options tab guide](../guides/configuration/options.md).
+For the dialog walkthrough, see the
+[Options guide](../guides/configuration/options.md).
 
-## Option flags
+## Global option flags
 
-`nexBash.options` holds the global boolean toggles. Defaults shown:
+`nexBash.options` holds global booleans. Defaults shown:
 
 | Flag | Default | Effect |
 | --- | --- | --- |
-| `notices` | `true` | Show nexBash status notices (target swaps, area-cleared, `nb` output) in the client. |
-| `rageToRaze` | `true` | Spend battlerage to raze a target's shield instead of waiting it out. |
-| `skipNonPartyRooms` | `true` | Move on instead of attacking when an unclaimed room already contains players outside your party. |
-| `swapOnShield` | `true` | When the current target raises a shield, switch to another valid target. |
-| `useMorimbuul` | `false` | Draw morimbuul before engaging mobs that can web you. |
-| `logging` | `false` | Emit additional diagnostic log output. Dev-only; not surfaced in the dialog. |
+| `notices` | `true` | Show status and command notices in the client. |
+| `rageToRaze` | `true` | Allow battlerage to raze a target's shield. |
+| `skipNonPartyRooms` | `true` | Move on when an unclaimed room contains players outside your party. |
+| `swapOnShield` | `true` | Switch to another valid target when the current target raises a shield. |
+| `useMorimbuul` | `false` | Draw morimbuul before engaging mobs that can web. |
+| `logging` | `false` | Emit additional diagnostic output; not shown in the dialog. |
 
-These flow into the per-tick decision context as `ctx.config.*`, so actions read
-them through the same gate they read everything else.
+These values enter the decision context as `ctx.config.*`. They are global player
+options, not strategy-profile args.
 
 ## Battlerage reserves
 
-`nexBash.config.battlerage` holds the rage buffers — how much rage to keep in
-reserve before a category of battlerage is allowed to spend. Defaults shown:
+`nexBash.config.battlerage` holds static rage buffers:
 
 | Buffer | Default | Meaning |
 | --- | --- | --- |
 | `shieldBuffer` | `17` | Rage kept available for a shield raze. |
-| `ccBuffer` | `35` | Rage kept available for a crowd-control rage. |
-| `generalBuffer` | `48` | Rage kept available for general battlerage. |
+| `ccBuffer` | `35` | Rage kept available for crowd control. |
+| `generalBuffer` | `48` | General reserve before ordinary battlerage spending. |
 
-The live "on battlerage balance" flag is runtime state, not config; the buffers
-above are composed with it into `ctx.battlerage` each tick. See
+The live battlerage-balance flag is runtime state. The context adapter composes it
+with these buffers into `ctx.battlerage` each tick. See
 [Battlerage](../guides/battlerage.md).
 
 ## Persisted settings document
 
-Settings live in the Nexus client variable store at
-`nexusclient.variables().vars.nexBash4Settings`. This is untrusted, user-editable
-JSON, so loading is a trust boundary: every load parses the blob through a Zod
-schema (tolerating loose forms — `0`/`1` for booleans, a scalar where a list is
-expected) and every save validates before writing, so a successful save always
-round-trips to a successful load.
-
-Current shape (`schemaVersion` 2):
+Settings live at
+`nexusclient.variables().vars.nexBash4Settings`. The current document is strict
+schema **v3**:
 
 ```jsonc
 {
-  "schemaVersion": 2,
-  "updatedAt": "2026-06-25T12:00:00.000Z",
-  "options": { "notices": true, "rageToRaze": true, "skipNonPartyRooms": true, "swapOnShield": true, "useMorimbuul": false },
-  "battlerage": { "shieldBuffer": 17, "ccBuffer": 35, "generalBuffer": 48 },
+  "schemaVersion": 3,
+  "updatedAt": "2026-07-11T12:00:00.000Z",
+  "options": {
+    "notices": true,
+    "rageToRaze": true,
+    "skipNonPartyRooms": true,
+    "swapOnShield": true,
+    "useMorimbuul": false,
+    "logging": false
+  },
+  "battlerage": {
+    "shieldBuffer": 17,
+    "ccBuffer": 35,
+    "generalBuffer": 48
+  },
   "areas": {
-    // keyed by a stable areaKey derived from id (or name)
     "id:137": {
       "areaKey": "id:137",
       "id": 137,
       "name": "Tuar",
       "areaTargets": ["a tuar warrior", "a tuar shaman"],
-      "npcs": { "a tuar shaman": { "canShield": true, "shouldCC": true } }
+      "npcs": {
+        "a tuar shaman": { "canShield": true, "shouldCC": true }
+      }
     }
   },
   "strategies": {
-    // keyed by class id; each entry is a profile set (FEAT-05)
-    "magi": {
+    "depthswalker": {
       "activeProfile": "group",
       "profiles": {
-        "default": {},
-        "group": { "order": { "primary": ["magi.stormhammer", "magi.erode"] } }
+        "group": {
+          "order": {
+            "primary": ["general.flee", "depthswalker.strike", "depthswalker.reap"]
+          },
+          "args": {
+            "daggerId": "59237",
+            "scytheId": "330399"
+          },
+          "actionArgs": {
+            "general.flee": { "hp": 0.25 }
+          }
+        }
       }
     }
   }
 }
 ```
 
-The snapshot is kept **minimal**: default-equal values, empty profile maps, and
-default-only classes are omitted, and `activeProfile` is omitted when it is the
-default. A persisted area entry mirrors the editable `AreaSettings` shape so the
-same schema validates a config-dialog draft.
+The snapshot is minimal: default-equal values, empty profile maps, and
+default-only classes are omitted. `activeProfile` is omitted when `default` is
+active.
 
 ### Per-area fields
 
 | Field | Meaning |
 | --- | --- |
-| `id` / `name` | Area identity (scalar or list); `areaKey` is derived from these. |
-| `areaTargets` | Ordered NPC names (the target priority list). |
+| `areaKey` | Stable identity derived from area ID or name. |
+| `id` / `name` | Scalar or list area identity. |
+| `areaTargets` | Ordered target names. |
 | `avoidTargets` | NPC names whose presence makes nexBash skip the room. |
-| `npcs` | Per-NPC combat-flag overrides (see [Area Configuration](../guides/configuration/area-configuration.md)). |
-| `targetThreshold` | Max targets in a room before moving on. |
-| `stepDelay` / `startRoom` | Optional pacing and entry-room hints. |
+| `npcs` | Per-NPC combat overrides. See [Area Configuration](../guides/configuration/area-configuration.md). |
+| `targetThreshold` | Maximum targets before moving on. |
+| `route` / `stepDelay` / `startRoom` | Optional route, pacing, and entry-room data. |
 
 ### Per-strategy fields
 
-A class entry is `{ activeProfile?, profiles }`, where each profile is a sparse
-**delta** over the shipped class defaults:
+A class entry is `{ activeProfile?, profiles }`. Every profile is a sparse delta
+over shipped defaults:
 
 | Delta field | Meaning |
 | --- | --- |
-| `order` | Per-lane full ordered catalog keys, present only when the lane differs from the shipped default. The order *is* the membership. |
-| `params` | Per-class config-knob overrides. |
-| `args` | Per-action tuning overrides, keyed by catalog key then param. |
+| `order` | Full ordered catalog keys for each changed lane. Order is also membership. |
+| `args` | Strategy-scoped string, number, or boolean overrides. |
+| `actionArgs` | Action-local primitive overrides keyed by catalog key and argument name. |
 
-A legacy v1 flat delta is tolerantly folded into
-`{ profiles: { default: <delta> } }` on load. See
-[Strategies](../guides/strategies.md) and [Profiles](../guides/profiles.md).
+No `params`, legacy per-action `args`, or class `config` aliases exist in the
+current runtime, draft, or saved shape.
 
-## Migrations
+## Self-healing load boundary
 
-The schema version is bumped only for shape changes, and the loader tolerates the
-prior shape where practical (the v1→v2 profile fold above). Because nexBash is
-pre-release with no installed user base, settings are not otherwise migrated.
+The Nexus variable is untrusted and user-editable. Loading therefore uses two
+layers:
+
+1. A pure stored-input healer recognizes older or loose data one independent
+   section at a time.
+2. The result must pass the one strict current v3 Zod schema before it is applied.
+
+The healer can:
+
+- coerce deliberately tolerated booleans such as `0` / `1`;
+- normalize scalar/list area fields and recover valid NPC overrides;
+- fold an older flat strategy delta into the `default` profile;
+- move the prior strategy `params` scope to current `args`;
+- move prior nested per-action `args` to `actionArgs`;
+- preserve valid options, battlerage, areas, or strategies when a sibling section
+  is malformed; and
+- discard unknown or irreconcilable fields.
+
+Legacy names stop at this I/O boundary. Zustand, runtime strategies, selection,
+and components know only v3.
+
+## Canonical rewrite
+
+After healed settings are applied, nexBash builds a normal snapshot from the live
+owners and validates it against the strict current schema. If the original stored
+document is not equivalent to that canonical snapshot, it is replaced
+immediately. Comparison ignores the intentionally refreshed `updatedAt` field, so
+an already-canonical document is not rewritten on every startup.
+
+As with normal saves, writes are deliberately suppressed while the procedural
+Mnemosyne area is active.
+
+This makes healing convergent and idempotent: after one successful load, storage
+uses the same current shape that a normal save emits.

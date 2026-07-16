@@ -29,7 +29,7 @@ UI, debug overlays, logging, and integrations.
 | `state.strategy` | object | Active class strategy `id` (`null` on an unsupported class). |
 | `state.combat` | object | `hasTarget`, the active `target` (`{ id, name }` or `null`), and `targetCount`. |
 | `state.session` | object | Per-run scoreboard: `kills`, `gold`, `elapsedMs` (all `0` when no run is active). |
-| `state.effects` | object | Transient bashing-effect availability: `bloodcloak`, `maya`, `deathcape`. |
+| `state.effects` | object | Transient bashing-effect state: `bloodcloak` and `maya` are booleans (available or not); `deathcape` is `{ available, charges, max }` with a running `0`–`50` charge count. |
 | `state.battlerage` | object | `balance` (on battlerage balance) plus the configured `shieldBuffer`, `ccBuffer`, `generalBuffer` reserves. |
 | `state.options` | object | A copy of the live player [option flags](./options.md). |
 
@@ -42,7 +42,7 @@ UI, debug overlays, logging, and integrations.
   strategy: { id: "magi" },
   combat:   { hasTarget: true, target: { id: 4821, name: "a tuar warrior" }, targetCount: 3 },
   session:  { kills: 18, gold: 2400, elapsedMs: 305000 },
-  effects:  { bloodcloak: false, maya: false, deathcape: true },
+  effects:  { bloodcloak: false, maya: false, deathcape: { available: true, charges: 32, max: 50 } },
   battlerage: { balance: true, shieldBuffer: 17, ccBuffer: 35, generalBuffer: 48 },
   options:  { rageToRaze: true, swapOnShield: true, skipNonPartyRooms: true, useMorimbuul: false, logging: false, notices: true }
 }

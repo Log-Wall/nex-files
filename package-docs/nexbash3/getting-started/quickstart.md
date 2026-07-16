@@ -19,6 +19,10 @@ selects the strategy for your class automatically on login and whenever your
 class changes. If your class is unsupported, nexBash will still navigate and
 pick targets, but it won't run class attacks.
 
+The current shipped set is **Depthswalker**, **Magi**, **Occultist**, **Psion**,
+**Black Dragon**, **Blue Dragon**, **Red Dragon**, **Golden Dragon**, and
+**Fire Lord**. Treat `nb help` as the authority for the installed build.
+
 ## 2. Open configuration
 
 ```text
@@ -30,7 +34,7 @@ The dialog has three tabs:
 | Tab | Purpose |
 | --- | --- |
 | [nexBash Options](../guides/configuration/options.md) | Global toggles and battlerage rage reserves |
-| [Class Configuration](../guides/configuration/class-configuration.md) | Per-class attack/battlerage priority and profiles |
+| [Class Configuration](../guides/configuration/class-configuration.md) | Shared profile settings, action tuning, lane priority, and profiles |
 | [Area Configuration](../guides/configuration/area-configuration.md) | Per-area settings, target priorities, and NPC combat flags |
 
 Edits are a **draft** — nothing reaches the live runtime until you **Save**.
@@ -91,8 +95,9 @@ JSON.stringify(nexBash.state, null, 2);
 
 ## 7. Save a profile (optional)
 
-If you tuned your class priorities for a specific situation (solo vs. group, a
-safe ramp, etc.), save it as a named **profile** so you can switch back later:
+If you tuned your class for a specific situation (solo vs. group, a safe ramp,
+different equipment, etc.), save it as a named **profile**. Lane order, shared
+strategy settings, and action tuning switch together:
 
 ```text
 nb profile save solo

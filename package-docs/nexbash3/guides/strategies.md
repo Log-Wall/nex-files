@@ -1,107 +1,136 @@
 ---
 title: Strategies
-description: The per-class shipped baselines, customization deltas, and how they evolve.
+description: Per-class shipped baselines, scoped tuning, and customization deltas.
 ---
 
 # Strategies
 
-A **strategy** is a class's combat baseline expressed as data: its priority lanes
-plus a small config object. nexBash ships exactly one strategy per supported class
-and selects yours automatically from your in-game class. This page explains what a
-strategy contains and how your customizations layer on top of it.
+A **strategy** is a class's combat baseline expressed as data: ordered lanes,
+optional shared settings, and an optional ingestion lifecycle. nexBash ships one
+strategy per supported class and selects yours automatically from your in-game
+class.
 
-For the moment-to-moment selection a strategy drives, read
+For moment-to-moment selection, read
 [The decision model](./decision-model.md) first.
 
 ## What ships
 
-Each shipped strategy is:
+Each shipped strategy can contain:
 
-- An `id` matching the lowercased class (e.g. `magi`, `red dragon`).
-- One or more **lanes** — ordered lists of catalog keys. A `primary` lane and,
-  for most classes, a `battlerage` lane.
-- A `config` object of class-level bool/int knobs (often empty).
-- An optional **ingestion lifecycle** (`activate` / `deactivate`) for the few
-  classes that learn facts during combat — for example, Magi registers listeners
-  that record each staff cast's observed damage, helping choose a best element
-  and giving you low/high damage ranges to review.
+- An `id` matching the lowercased class, such as `magi` or `red dragon`.
+- One or more ordered **lanes** of catalog keys: a `primary` lane and usually a
+  `battlerage` lane.
+- Optional strategy-scoped `args` and `argMeta`. Metadata supplies labels, help,
+  grouping, and field presentation; it is never read by combat gates.
+- An optional `activate` / `deactivate` lifecycle for class-specific observation
+  ingestion. Occultist uses this to record a cleanseaura fact without putting
+  class branches in the generic selector.
 
-The supported set out of the box: **Magi**, **Occultist**, **Red Dragon**, **Blue
-Dragon**, **Golden Dragon**, **Fire Lord**. Confirm the live set with `nb help` or
+The current supported set is **Depthswalker**, **Magi**, **Occultist**, **Psion**,
+**Black Dragon**, **Blue Dragon**, **Red Dragon**, **Golden Dragon**, and
+**Fire Lord**. Confirm the installed set with `nb help` or
 `nexBash.supportedClasses`.
 
-### Example: how a lane reads
+### Example lane
 
-Magi's primary lane is ordered defensive-first, then offensive, then the elemental
+Magi's primary lane is defensive-first, then offensive, then its elemental
 staff cycle:
 
 ```text
-general.fly        ┐
-general.flee       │ defensive
-tattoos.shield     ┘
-magi.erode         ┐ offensive
-magi.stormhammer   ┘
-magi.dissolution   ┐ elemental cycle (magic)
-magi.scintilla     │ (fire)
-magi.horripilation │ (cold)
-magi.lightning     ┘ (electric)
+general.fly
+general.flee
+tattoos.shield
+magi.erode
+magi.stormhammer
+magi.dissolution
+magi.scintilla
+magi.horripilation
+magi.lightning
 ```
 
-Selection walks this top-to-bottom each prompt. The elemental cycle is where
-probing shows up: each element's gate rejects a damage type the target resists, so
-first-valid walks the cycle while probing and then settles on the best allowed
-element. No priority is mutated — the *order* is fixed and the *gates* do the work.
+Selection walks the lane top-to-bottom each prompt. The order remains static;
+pure action gates decide which entries are legal for the current context.
+
+## Two configuration owners
+
+Values live with the concern they describe:
+
+- **Strategy args** describe the whole class setup and are shared by every
+  primary action and battlerage in that profile. Depthswalker's `daggerId` and
+  `scytheId` are examples.
+- **Action args** describe one catalog action. An individual action's HP threshold
+  is an example.
+
+Actions receive both scopes explicitly:
+
+```js
+canExecute(ctx, tuning) {
+  return ctx.selfHp < tuning.action.hp;
+}
+
+execute(ctx, tuning) {
+  return `wield ${tuning.strategy.scytheId}`;
+}
+```
+
+Strategy args may be strings, numbers, or booleans, provided an override matches
+the primitive type of its shipped default. Unknown keys and wrong types do not
+enter effective runtime tuning.
 
 ## Customization is a delta
 
-When you edit a class in the [Class Configuration](./configuration/class-configuration.md)
-tab, you are not editing the shipped strategy — you are building a sparse **delta**
-over it. A delta records only what you changed:
+The configuration dialog does not mutate the shipped baseline. It builds a
+sparse delta containing only profile changes:
 
-| Delta field | What you changed |
+| Delta field | What it owns |
 | --- | --- |
-| `order` | A lane's full ordered keys, stored only when it differs from the shipped order. The order *is* the membership — a key present is evaluated, a key absent is benched. |
-| `params` | Class config knobs you overrode. |
-| `args` | Per-action tuning (e.g. an HP threshold) you overrode, keyed by catalog key then param. |
+| `order` | A lane's full ordered catalog keys when membership/order differs from the shipped lane. |
+| `args` | Strategy-scoped primitive overrides. |
+| `actionArgs` | Per-action primitive overrides, keyed by catalog key and then argument name. |
 
-The effective lanes the selector reads are *shipped defaults ⊕ your delta*,
-recomputed when the delta is applied. This split has two important consequences:
+The obsolete class `config` / delta `params` model is not part of the current
+runtime shape. Global nexBash options still belong to `ctx.config`; that is a
+different owner from strategy-profile tuning.
 
-- **An untouched lane inherits the shipped order.** If a nexBash update improves a
-  class's default priority, you get the improvement automatically on any lane you
-  never customized.
-- **A customized lane owns its order.** If you reordered a lane, a newly shipped
-  action lands on your config **bench** (Available column) instead of silently
-  injecting into your priority. You decide whether to add it.
+An untouched lane inherits its shipped order, so later baseline improvements flow
+through. Once customized, a lane owns its full order; newly shipped actions appear
+on the **Available** bench rather than being injected into the player's priority.
 
-Deltas are normalized to a minimal canonical form before saving — a fully-default
-class stores nothing at all.
+Deltas are normalized to a minimal canonical form before persistence. A fully
+default class stores no profile entry.
 
-## Per-action tuning (args)
+## Effective and precomputed state
 
-Some actions expose tunable **args** — a numeric or boolean threshold the action's
-gate reads (e.g. "fly when self HP drops below this"). Args are seeded over the
-whole class action universe, so an action is tunable even while it sits on the
-bench. Your overrides are stored in the delta's `args` and merged over the
-action's shipped defaults.
+Applying a profile always rebuilds the effective lanes, strategy args, and action
+args from shipped defaults plus that one delta. It then derives an immutable
+`ActionTuning` envelope for every effective catalog key:
+
+```js
+{
+  strategy: strategy.args,
+  action: strategy.actionArgs[key],
+}
+```
+
+The selector reads this precomputed map once per candidate and returns the
+winning reference with the choice. No prompt-time tuning merge or action-global
+strategy read is needed. An action added from the bench receives the active
+strategy scope automatically.
 
 ## Switching classes
 
-nexBash re-selects the strategy whenever your class changes (it listens for the
-nexSys4 class-change event), running the outgoing strategy's `deactivate` and the
-incoming one's `activate`. An unsupported class resets the strategy owner to an
-inert default and surfaces a notice naming the supported set — navigation and
-target selection still work, but no class attacks are queued.
-
-You can also drive selection directly:
+nexBash re-selects the strategy whenever your class changes, running the outgoing
+strategy's `deactivate` and the incoming one's `activate`. An unsupported class
+resets the strategy owner to an inert state and surfaces a notice; navigation and
+target selection remain available, but class attacks are not queued.
 
 ```js
-nexBash.setStrategy("magi");   // returns true if a strategy was activated
-nexBash.currentStrategy?.id;   // "magi"
+nexBash.setStrategy("magi");
+nexBash.currentStrategy?.id; // "magi"
 ```
 
 ## Profiles
 
-A strategy can hold several **named** customization variants — "solo", "group",
-"safe" — and switch between them in-client. A profile *is* a delta. See
-[Profiles](./profiles.md).
+A strategy can hold several named, complete customization variants such as
+`solo`, `group`, and `safe`. A profile switches its lane order, shared strategy
+args, and action args together. See [Profiles](./profiles.md).

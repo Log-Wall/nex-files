@@ -108,11 +108,15 @@ is being held back too aggressively.
 
 ## Collecting a bug report
 
-Capture the version, the relevant console error, and a serialized state snapshot:
+Immediately after the problem occurs, run:
 
-```js
-copy(JSON.stringify({ version: nexBash.version, state: nexBash.state }, null, 2));
+```text
+nb report
 ```
 
-State may include character, target, area, and session information. Review the
-snapshot before sharing it publicly.
+Open the developer console and copy the complete `nexBash diagnostic report`
+block. The same report is available programmatically as
+`nexBash.api.diagnostics.report()`. It omits character and player names, but it
+does contain NPC names, target/item IDs, area configuration, and combat tuning;
+review it before sharing publicly. If the console also shows an exception, copy
+that error and stack trace alongside the report.

@@ -1,45 +1,51 @@
 ---
 title: Configuration
-description: Overview of the nexBash4 configuration dialog.
+description: Overview of the nexBash4 configuration dialog and its atomic draft.
 ---
 
 # Configuration
 
-Open the configuration dialog from the command line:
+Open the dialog with:
 
 ```text
 nb config
 ```
 
-The dialog edits a **draft**. Every control mutates only the draft; the live
-`nexBash` runtime stays the source of truth until you commit. **Save** validates
-the draft, applies it to the runtime, and persists it; **Cancel** discards it.
-Save and Cancel are therefore atomic — nothing reaches the runtime mid-edit.
+Every control edits a Zustand **draft**. **Save** validates and applies the whole
+draft before persistence; **Cancel** discards it. Runtime combat and stored
+settings therefore never observe a half-edited profile.
 
 ## Tabs
 
 | Tab | Purpose |
 | --- | --- |
-| [nexBash Options](./options.md) | Global behavior toggles and battlerage rage reserves. |
-| [Class Configuration](./class-configuration.md) | Per-class attack and battlerage priority, and combat profiles. |
+| [nexBash Options](./options.md) | Global behavior toggles and battlerage reserves. |
+| [Class Configuration](./class-configuration.md) | Shared profile settings, action tuning, lane priority, and complete profiles. |
 | [Area Configuration](./area-configuration.md) | Per-area settings, target order, and per-NPC combat flags. |
 
 ## How the draft works
 
-When the dialog opens it **hydrates** a snapshot of the live runtime into a
-plain-object draft. As you edit:
+Opening the dialog hydrates current runtime owners into detached plain objects:
 
-- Option toggles and rage buffers update the draft's `options` / `battlerage`.
-- Class-config drag-and-drop and tuning update the draft's per-class profile delta.
-- Target edits update the draft's per-area settings.
+- Global toggles and rage buffers populate `options` and `battlerage`.
+- Each strategy draft carries profiles plus an editor for `lanes`, strategy
+  `args`, and `actionArgs`.
+- Area and target edits populate per-area settings.
 
-On **Save**, the draft is validated against the canonical settings schema, applied
-to the runtime, and written to the Nexus variable store. A customized class lane
-**owns its order** — newly shipped actions land on the config "bench" rather than
-silently injecting into your priority. See
-[Strategies](../strategies.md) for that membership model.
+Profile switching and **Save as** first fold all three strategy slices into a
+minimal `{ order?, args?, actionArgs? }` delta. On dialog **Save**, only current
+schema shapes are validated, installed through their runtime owners, and written
+to the Nexus variable store.
+
+Legacy storage healing does not occur in Zustand. It happens once at the Zod/I/O
+boundary before runtime hydration; a healed load is rewritten as canonical schema
+v3. See [Options & settings](../../reference/options.md).
+
+A customized lane owns its full order, so newly shipped actions appear on the
+Available bench instead of being injected into the player's priority. See
+[Strategies](../strategies.md).
 
 :::note Screenshots
-The screenshots in these pages illustrate layout. The installed release remains
-the authority for available entries and defaults.
+Screenshots illustrate layout. The installed release remains the authority for
+available fields, conditional subtabs, and defaults.
 :::

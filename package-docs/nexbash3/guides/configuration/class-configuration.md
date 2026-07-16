@@ -1,75 +1,88 @@
 ---
 title: Class Configuration
-description: Tune per-class attack and battlerage priority, and manage combat profiles.
+description: Edit shared strategy settings, action tuning, lane priority, and complete profiles.
 ---
 
 # Class Configuration
 
 ![The nexBash4 Class Configuration tab](../../assets/nexbash-config-class.png)
 
-The **Class Configuration** tab is where you shape what your class does in combat:
-the order it tries abilities, which abilities are even in play, any per-class
-knobs, and the named [profiles](../profiles.md) you switch between.
+The **Class Configuration** tab edits one class strategy profile: its shared
+settings, primary and battlerage membership/order, and action-local tuning.
 
 ## Strategy toolbar
 
-The toolbar across the top selects what you are editing:
-
 | Control | Purpose |
 | --- | --- |
-| **Strategy** | The class whose priorities you are editing. Defaults to your current class. |
-| **Profile** | The named variant being edited. Always edits the **active** profile. |
-| **Profile name** + **Save as** | Fork the current edits into a new named profile. |
-| **Rename** / **Delete** | Rename or remove the active profile (the implicit `default` is protected). |
-| **⚙ Settings** | A popover of per-class knobs — only shown for classes that ship them. |
+| **Strategy** | Select the class to edit. It initially follows your current supported class. |
+| **Profile** | Select the named complete variant to edit. |
+| **Profile name** + **Save as** | Fork all current draft edits into a new profile. |
+| **Rename** / **Delete** | Rename or remove the active profile; `default` is protected. |
 
-Switching strategy or profile folds your in-progress edits back into their profile
-first, so nothing is lost when you move between them.
+Switching strategy or profile first folds the live editor into its outgoing draft
+profile. This includes lane order, shared Settings values, and action tuning, so
+there is no local-state leakage between profiles.
 
-## Priority lanes
+## Subtabs
 
-Below the toolbar are the lane editors, one per sub-tab:
+The editor shows the useful subset of:
 
-- **Primary** — the main attack lane.
-- **Battlerages** — the battlerage lane (only shown for classes with one).
+- **Settings**: shared strategy args for the active profile. This tab appears only
+  when the strategy declares shared settings.
+- **Primary**: the main action lane.
+- **Battlerages**: the battlerage lane, when the strategy has one.
 
-Each lane editor has three columns:
+### Settings: shared profile values
+
+Settings are values owned by the whole strategy profile and delivered to every
+selected primary action and battlerage. Depthswalker's dagger and scythe
+identities are examples. Metadata supplies a friendly label, help text, group,
+and input constraints.
+
+Fields may be strings, numbers, integers, booleans, or percentages. Each edit writes
+directly to the Zustand dialog draft through the strategy-arg action; components
+do not keep a second local copy and the live combat strategy is not mutated.
+
+### Primary and Battlerages: membership and order
+
+Each lane uses three columns:
 
 | Column | Meaning |
 | --- | --- |
-| **Available** | Actions your class *can* use that are not currently in the priority. The "bench." |
-| **Priority** | The evaluated order, top to bottom. Position 1 is tried first. |
-| **Properties** | Tuning for the selected action (when it exposes any). |
+| **Available** | Class-available catalog actions not currently evaluated: the bench. |
+| **Priority** | Effective membership and first-valid order, top to bottom. |
+| **Properties** | Metadata and **Tuning** for the selected action. |
 
-Drag an action from **Available** into **Priority** to add it; drag it back to
-remove it. Reorder within **Priority** to change which ability is tried first.
+Drag an action into or out of **Priority** to change membership, or reorder it to
+change preference. The order is the membership; there is no separate disabled
+flag. A customized lane owns its full order, so newly shipped actions appear on
+the bench rather than being inserted into your priority.
 
-The order **is** the membership: an action in the Priority column is evaluated; an
-action on the bench is available but not in play. There is no separate "disabled"
-checkbox. Because a customized lane owns its order, a future nexBash update that
-ships a new ability surfaces it on your bench rather than injecting it into your
-priority unannounced.
+Action **Tuning** belongs only to the selected catalog action, such as its HP
+threshold. Shared values are edited once in **Settings** and are never duplicated
+across Properties panels. Bench actions remain tunable, and receive the active
+shared strategy scope automatically if later added to a lane.
 
-## How priority actually resolves
+## How priority resolves
 
-The Priority column is an *order of preference*, not a fixed script. Each prompt,
-nexBash walks the lane top-to-bottom and uses the **first** action whose
-situational gate passes right now — so a high-priority ability that isn't legal
-this instant (no balance, wrong target state, resisted damage type) is simply
-skipped in favor of the next valid one. See [the decision model](../decision-model.md)
-for exactly how that works.
+Each decision tick, nexBash walks the lane top-to-bottom and uses the first action
+whose `canExecute(ctx, tuning)` gate passes. The chosen `execute` call receives
+the same precomputed tuning reference. See
+[The decision model](../decision-model.md).
 
-## Class settings
+## Saving and canceling
 
-Some classes expose bool/int **knobs** beyond ability order (for example a
-threshold that changes when an ability kicks in). These live behind the
-**⚙ Settings** popover and are part of the profile delta — they save and switch
-with the profile like everything else.
+All fields edit only the dialog draft:
 
-## Saving
+- **Save** folds the active editor into minimal profile deltas, validates the
+  current schema, applies complete profile sets to runtime, and persists them.
+- **Cancel** discards the draft. Runtime and storage remain untouched.
 
-All edits stay in the draft until you press **Save** on the dialog. On save,
-nexBash builds the **minimal delta** over the shipped class defaults — only the
-lanes, params, and action args you actually changed are stored — and persists it
-under the active profile. See [Strategies](../strategies.md) and
+The canonical strategy delta contains only changed `order`, strategy `args`, and
+`actionArgs`. See [Strategies](../strategies.md) and
 [Profiles](../profiles.md).
+
+:::note Screenshot
+The screenshot illustrates the overall layout. The installed release is the
+authority for which conditional subtabs and settings are available.
+:::

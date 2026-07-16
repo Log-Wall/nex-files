@@ -37,9 +37,15 @@ Manage the active class's combat [profiles](./profiles.md):
 | Command | Effect |
 | --- | --- |
 | `nb profile` | List profiles, marking the active one. |
-| `nb profile <name>` | Switch to a saved profile. |
-| `nb profile save <name>` | Save the current priorities as a profile (and make it active). |
+| `nb profile <name>` | Switch lane order, shared strategy settings, and action tuning to a saved profile. |
+| `nb profile save <name>` | Save the current complete strategy customization as a profile and make it active. |
 | `nb profile rm <name>` | Delete a profile (the implicit `default` is protected). |
+
+## Troubleshooting
+
+| Command | Effect |
+| --- | --- |
+| `nb report` / `nb diagnose` | Print a copy/paste troubleshooting report to the developer console. |
 
 ## Help
 

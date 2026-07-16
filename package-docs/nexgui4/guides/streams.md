@@ -40,7 +40,7 @@ rows:
 | `Char.Afflictions.Add` | System | a `+aff` row |
 | `Char.Afflictions.Remove` | System | a `-aff` row |
 | `IRE.Target.Info` | Combat | a target status row |
-| `nexSkillMatch` / `nexSkillNpcMatch` | Combat | a structured skill-replacement row |
+| `nexskill.match` / `nexskill.match.npc` | Combat | a structured skill-replacement row |
 
 If your message fits one of these contracts, raise the event and let the
 existing bindings format it:
@@ -52,11 +52,14 @@ eventStream.raiseEvent("Char.Defences.Add", {
 });
 ```
 
-:::caution `nexSkillMatch`
+:::caution `nexskill.match`
 
-`nexSkillMatch` / `nexSkillNpcMatch` depend on the host replacement handler
-running during live line processing. Raising them from arbitrary code outside a
-live output block will not render a combat row — write the row directly instead.
+`nexskill.match` / `nexskill.match.npc` depend on the host replacement handler
+running during live line processing. `nexskill.match` is emitted for both skill
+and NPC matches, so nexGui4 only consumes it for skill replacement when the
+payload has `skill`; NPC replacement rows use `nexskill.match.npc`. Raising
+these events from arbitrary code outside a live output block will not render a
+combat row — write the row directly instead.
 
 :::
 

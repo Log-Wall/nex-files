@@ -16,6 +16,7 @@ lifecycle helpers and accessors also live directly on the global.
 | `api.config` | Area / NPC configuration | `setArea`, `addArea`, `addNpc` |
 | `api.observe` | Report observed game-state into the owned models | `npc.shield.*`, `npc.cc.*`, `self.effects.*`, `self.battlerage.*` |
 | `api.strategy` | Strategy profile management | `profiles.list`, `profiles.active`, `profiles.apply`, `profiles.save`, `profiles.remove` |
+| `api.diagnostics` | Read-only troubleshooting snapshots | `report` |
 
 ### `api.control`
 
@@ -66,9 +67,11 @@ nexBash.api.observe.npc.shield.lost();
 nexBash.api.observe.npc.cc.got("sensitivity");
 nexBash.api.observe.npc.cc.lost("sensitivity");
 
-// A nexBash-tracked effect became available / unavailable.
-nexBash.api.observe.self.effects.got("bloodcloak"); // bloodcloak | maya | deathcape
+// A nexBash-tracked effect changed. got/lost flip availability (bloodcloak, maya);
+// charge accrues a deathcape charge (0–50) and flips availability on the first one.
+nexBash.api.observe.self.effects.got("bloodcloak");
 nexBash.api.observe.self.effects.lost("maya");
+nexBash.api.observe.self.effects.charge("deathcape");
 
 // Battlerage availability: the shared balance, or a named ability's own cooldown.
 nexBash.api.observe.self.battlerage.got();
@@ -92,6 +95,19 @@ nexBash.api.strategy.profiles.remove("solo"); // delete a profile (default is pr
 
 Each command resolves against the active strategy: an unsupported class or an
 unknown profile surfaces an in-client notice and is a no-op — it never throws.
+
+### `api.diagnostics`
+
+```js
+const report = nexBash.api.diagnostics.report();
+```
+
+`report()` prints one JSON block to the developer console and returns the same
+structured object. It correlates the run machine, room/area matching, target
+priorities and thresholds, strategy/profile lanes, action gates, offence
+blockers, integrations, and persisted-settings schema. It does not modify live
+state. Character and player names are omitted; NPC names and item/target IDs are
+included because they are needed to diagnose exact-name and targeting failures.
 
 ## Top-level lifecycle helpers
 
