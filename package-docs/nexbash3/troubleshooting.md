@@ -78,7 +78,7 @@ Most often offence is suspended or there is no valid target. Check:
 
 ```js
 nexBash.state.system;   // { enabled, slow } — is a run actually live?
-nexBash.state.combat;   // { hasTarget, target, targetCount }
+nexBash.state.combat;   // population count plus exact attacker count/IDs
 ```
 
 nexBash suspends offence while you have **shield**, **prismatic**, or **aeon** up
@@ -92,6 +92,22 @@ nexBash.trace.enable();
 nexBash.trace.list();
 nexBash.trace.disable();
 ```
+
+If targets are present but none is selected, compare room population with the
+attacker budget:
+
+```js
+nexBash.state.area.maxAttackers;
+nexBash.state.combat.targetCount;
+nexBash.state.combat.attackerCount;
+nexBash.state.combat.attackerIds;
+nexBash.api.diagnostics.report().engagement;
+```
+
+The diagnostic engagement branch lists each ranked candidate's projected exact
+IDs, incremental IDs, count, and budget result. `NO_SAFE_TARGET` means every
+candidate is unsafe; `ATTACKER_BUDGET_EXCEEDED` means the already-committed
+engagement is over the area cap.
 
 ## Battlerage isn't firing
 

@@ -73,6 +73,7 @@ configuration toggles.
 | `knocker` | Knocker travel. |
 | `gare` | Gare travel. |
 | `urn` | Urn travel. |
+| `hourglass` | Touches the hourglass to reach room `68155` after a 10-second channel. Available from Mainland and Meropis locations. |
 | `pebble` | Pebble travel. |
 | `nurRift` | Nur rift travel. Always available; not configurable. |
 
@@ -83,6 +84,7 @@ character can actually use, either in the dialog or with a toggle:
 nexMap.api.travel.enable("clouds");      // eagleWings + atavianWings
 nexMap.api.travel.disable("wormholes");
 nexMap.api.travel.toggle("universe");
+nexMap.api.travel.enable("hourglass");
 nexMap.api.travel.isEnabled("wormholes");
 ```
 
@@ -100,16 +102,18 @@ names:
 | `grates` / `sewergrates` | `sewergrate` |
 | `wormholes` | `wormhole` |
 
-### Wing commands
+### Travel commands
 
-Wing travel sends a spoken incantation. The defaults match Achaea's standard
-phrases and can be customized on the Pathing & Travel tab:
+Travel commands can be customized on the Pathing & Travel tab. The wing
+defaults match Achaea's standard phrases, while the hourglass can use a
+separator-delimited retrieval sequence when it is stored in a container:
 
 | Class | Default command |
 | --- | --- |
 | `eagleWings` | `say duanathar` |
 | `atavianWings` | `say duanatharan` |
 | `islandWings` | `say duanatharic` |
+| `hourglass` | `touch hourglass` |
 
 ## Wormholes
 

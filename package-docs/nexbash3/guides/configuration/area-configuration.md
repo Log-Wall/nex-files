@@ -19,10 +19,22 @@ To add a brand-new area, walk to it in-game and use `nb addarea` (see [Commands]
 
 ![The nexBash4 Area Settings sub-tab](../../assets/nexbash-config-targets-settings.png)
 
-The **Area Settings** sub-tab configures threshold limits and target exclusion for the selected area:
+The **Area Settings** sub-tab configures the attacker budget, target exclusion,
+and lifecycle commands for the selected area:
 
-- **Target Threshold** — The maximum number of targets to engage in a single room of this area before moving on (defaults to 5).
+- **Maximum Attackers** — The maximum number of exact NPC attackers nexBash may
+  project after an action (defaults to 5). Room population alone does not consume
+  this budget.
 - **Avoid Targets** — A list of specific NPC names. If any of these NPCs are present in a room, nexBash will skip that room entirely. To add an avoid target, type its name and press Add.
+- **On activation** — Commands sent after the area's scoped setup completes and
+  the owned clone is live.
+- **On deactivation** — Commands sent before the outgoing area's scoped
+  resources are disposed.
+
+Lifecycle automations are ordered, command-only data. Blank or unknown action
+shapes are rejected at the settings boundary; executable JavaScript callbacks
+are deliberately not persisted. External packages that need richer behavior
+should subscribe to the [area lifecycle events](../../reference/events.md#area-lifecycle).
 
 ---
 
@@ -51,8 +63,8 @@ selected target:
 
 | Flag | Meaning |
 | --- | --- |
-| **Aggro** | Treat this NPC as aggressive when selecting or skipping targets. |
-| **Can Assist** | This NPC can join fights already in progress. |
+| **Aggro** | Count this NPC as attacking when it is present. |
+| **Can Assist** | This NPC defends direct attacks according to its Assist Group. |
 | **Can Block** | This NPC can block movement or escape paths. |
 | **Can Chase** | This NPC may follow after you leave the room. |
 | **Can Fly** | This NPC can follow or attack in flight-relevant rooms. |
@@ -60,9 +72,14 @@ selected target:
 | **Can Raze** | This NPC can remove your shield defence. |
 | **Can Shield** | This NPC can raise a shield that affects action choice. |
 | **Can Web** | This NPC can web — drives morimbuul pre-draw and safety logic. |
-| **Charmable** | This NPC can be affected by charm-style control. |
-| **Stunnable** | This NPC can be affected by stun-style control. |
-| **Should CC** | Prefer crowd-control actions against this NPC when available. |
+
+Two typed fields sit below the switches:
+
+- **Assist Group** — blank means a confirmed assistant defends any directly
+  attacked NPC. A nonblank value couples it only to direct targets with the same
+  explicit group. It does not use `groupName`.
+- **CC Minimum Attackers** — `0` disables crowd control for the NPC. A positive
+  value enables CC only when the current exact attacker count reaches it.
 
 The selected target's estimated **health** (`totalHp`) is shown next to its name.
 A target in the list with no stored data shows an empty flag panel until you set

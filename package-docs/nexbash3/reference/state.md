@@ -24,11 +24,12 @@ UI, debug overlays, logging, and integrations.
 
 | Branch | Value | Contents |
 | --- | --- | --- |
-| `state.system` | object | `version`, `enabled` (a run is live). |
-| `state.area` | object | Active area `id`, `name`, and `targetThreshold`. |
+| `state.system` | object | `version`, `enabled` (a run is live), and the transient `slow` toggle. |
+| `state.area` | object | `active`, canonical identity `key`, `gameId`, `gameName`, `maxAttackers`, and `routeLength`. Identity/config fields are `null` when no area is active. |
 | `state.strategy` | object | Active class strategy `id` (`null` on an unsupported class). |
-| `state.combat` | object | `hasTarget`, the active `target` (`{ id, name }` or `null`), and `targetCount`. |
+| `state.combat` | object | `hasTarget`, active `target`, tracked-room `targetCount`, objective-eligible `eligibleTargetCount`, and exact `attackerCount`/`attackerIds`. |
 | `state.session` | object | Per-run scoreboard: `kills`, `gold`, `elapsedMs` (all `0` when no run is active). |
+| `state.hunt` | object or `null` | Frozen correlated hunt-session snapshot: owner, objective, progress, route passes, lifecycle timestamps, and terminal state. |
 | `state.effects` | object | Transient bashing-effect state: `bloodcloak` and `maya` are booleans (available or not); `deathcape` is `{ available, charges, max }` with a running `0`–`50` charge count. |
 | `state.battlerage` | object | `balance` (on battlerage balance) plus the configured `shieldBuffer`, `ccBuffer`, `generalBuffer` reserves. |
 | `state.options` | object | A copy of the live player [option flags](./options.md). |
@@ -37,11 +38,19 @@ UI, debug overlays, logging, and integrations.
 
 ```js
 {
-  system:   { version: "1.0.0", enabled: true },
-  area:     { id: 137, name: "Tuar", targetThreshold: 5 },
+  system:   { version: "0.6.0", enabled: true, slow: false },
+  area:     { active: true, key: "id:137", gameId: 137, gameName: "Tuar", maxAttackers: 5, routeLength: 42 },
   strategy: { id: "magi" },
-  combat:   { hasTarget: true, target: { id: 4821, name: "a tuar warrior" }, targetCount: 3 },
+  combat:   {
+    hasTarget: true,
+    target: { id: 4821, name: "a tuar warrior" },
+    targetCount: 3,
+    eligibleTargetCount: 2,
+    attackerCount: 1,
+    attackerIds: ["4821"]
+  },
   session:  { kills: 18, gold: 2400, elapsedMs: 305000 },
+  hunt:     null,
   effects:  { bloodcloak: false, maya: false, deathcape: { available: true, charges: 32, max: 50 } },
   battlerage: { balance: true, shieldBuffer: 17, ccBuffer: 35, generalBuffer: 48 },
   options:  { rageToRaze: true, swapOnShield: true, skipNonPartyRooms: true, useMorimbuul: false, logging: false, notices: true }
@@ -82,6 +91,6 @@ return live references, not frozen copies — treat them as read-only):
 | `nexBash.target` | The active target instance, or the `NO_TARGET` projection. |
 | `nexBash.targets` | The live list of room combatants. |
 | `nexBash.hasTarget` | Whether an active target exists. |
-| `nexBash.area` | The active (cloned) `Area` instance. |
+| `nexBash.area` | The active owned `Area` clone, or `null` in an unsupported location. |
 | `nexBash.currentStrategy` | The active class strategy object (`null` if unsupported). |
 | `nexBash.supportedClasses` | The class ids nexBash ships a strategy for. |

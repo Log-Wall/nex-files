@@ -67,9 +67,7 @@ restate hand-maintained runtime notes.
 | `nexsys4.balance.reset` | `nexsys4.balance.reset.<id>` (eventstream) | `stable` | Balance timing was reset. |
 | `nexsys4.balance.duration.observed` | `nexsys4.balance.duration.observed.<id>` (eventstream) | `stable` | Observed balance recovery duration changed. |
 | `nexsys4.eqbal.got` | none | `stable` | Balance and equilibrium are both available. |
-| `nexsys4.limb.hit` | `nexsys4.limb.hit.<limb>` (eventstream) | `stable` | Limb damage was recorded. |
-| `nexsys4.limb.reset` | `nexsys4.limb.reset.<limb>` (eventstream) | `stable` | Limb tracking was reset. |
-| `nexsys4.limb.stage.changed` | `nexsys4.limb.stage.changed.<limb>` (eventstream) | `stable` | Limb damage stage changed. |
+| `nexsys4.limb.updated` | `nexsys4.limb.updated.<limb>` (eventstream) | `stable` | Limb damage or break state changed. |
 
 ### Items, cache, queue, rules, and serverside
 
@@ -91,8 +89,8 @@ restate hand-maintained runtime notes.
 | `nexsys4.queue.fired.ack` | none | `stable` | Queue fire acknowledgement was recorded. |
 | `nexsys4.serverside.aff.priority.set` | `nexsys4.serverside.aff.priority.set.<id>` (eventstream) | `stable` | Live serverside affliction priority confirmation was observed. |
 | `nexsys4.serverside.def.priority.set` | `nexsys4.serverside.def.priority.set.<id>` (eventstream) | `stable` | Live serverside defence priority confirmation was observed. |
-| `nexsys4.rule.activated` | `nexsys4.rule.activated.<id>` (eventstream) | `stable` | Serverside rule became active. |
-| `nexsys4.rule.deactivated` | `nexsys4.rule.deactivated.<id>` (eventstream) | `stable` | Serverside rule stopped being active. |
+| `nexsys4.rule.activated` | `nexsys4.rule.activated.<id>` (eventstream) | `stable` | Declarative rule became active. |
+| `nexsys4.rule.deactivated` | `nexsys4.rule.deactivated.<id>` (eventstream) | `stable` | Declarative rule stopped being active. |
 
 ## Not included here
 

@@ -38,18 +38,22 @@ Options persist per character.
 
 ## 4. Save your layout
 
-Once the panels are arranged how you like them, persist the arrangement:
+Once the panels are arranged how you like them, save the arrangement under a
+name of your choosing:
 
 ```js
-nexGui.api.layout.save();
+nexGui.api.layout.save("bigMonitor");
 ```
 
-Restore it later, or apply a built-in preset:
+Save one per screen you play on, then switch between them:
 
 ```js
-nexGui.api.layout.list(); // available preset ids
-nexGui.api.layout.restore(); // re-apply your saved layout
+nexGui.api.layout.list(); // stored layout names
+nexGui.api.layout.apply("bigMonitor"); // switch to a stored layout
 ```
+
+The `kDesktop` and `mobile` starters are already in the list on a fresh install.
+See the [Layouts guide](../guides/layout.md) for the full workflow.
 
 ## 5. Inspect live state
 

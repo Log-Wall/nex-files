@@ -32,9 +32,9 @@ External package authors should start with the
 
 ## Registry summary
 
-- Total topics: 74
-- EventStream-public topics: 51
-- JS-public-only topics: 23
+- Total topics: 70
+- EventStream-public topics: 49
+- JS-public-only topics: 21
 - Internal-only topics: 0
 
 ## EventStream-public topics
@@ -71,9 +71,7 @@ External package authors should start with the
 | `nexsys4.balance.reset` | eventstream | id | `stable` | Balance timing was reset. |
 | `nexsys4.balance.duration.observed` | eventstream | id | `stable` | Observed balance recovery duration changed. |
 | `nexsys4.eqbal.got` | none | none | `stable` | Balance and equilibrium are both available. |
-| `nexsys4.limb.hit` | eventstream | limb | `stable` | Limb damage was recorded. |
-| `nexsys4.limb.reset` | eventstream | limb | `stable` | Limb tracking was reset. |
-| `nexsys4.limb.stage.changed` | eventstream | limb | `stable` | Limb damage stage changed. |
+| `nexsys4.limb.updated` | eventstream | limb | `stable` | Limb damage or break state changed. |
 | `nexsys4.cache.amount.changed` | none | none | `stable` | Cached item counts changed. |
 | `nexsys4.cache.inventory.list` | none | none | `stable` | Inventory cache snapshot applied. |
 | `nexsys4.cache.rift.list` | none | none | `stable` | Rift cache snapshot applied. |
@@ -90,8 +88,8 @@ External package authors should start with the
 | `nexsys4.queue.fired.ack` | none | none | `stable` | Queue fire acknowledgement was recorded. |
 | `nexsys4.serverside.aff.priority.set` | eventstream | id | `stable` | Live serverside affliction priority confirmation was observed. |
 | `nexsys4.serverside.def.priority.set` | eventstream | id | `stable` | Live serverside defence priority confirmation was observed. |
-| `nexsys4.rule.activated` | eventstream | id | `stable` | Serverside rule became active. |
-| `nexsys4.rule.deactivated` | eventstream | id | `stable` | Serverside rule stopped being active. |
+| `nexsys4.rule.activated` | eventstream | id | `stable` | Declarative rule became active. |
+| `nexsys4.rule.deactivated` | eventstream | id | `stable` | Declarative rule stopped being active. |
 
 ## JS-public-only topics
 
@@ -104,7 +102,6 @@ External package authors should start with the
 | `nexsys4.aff.priority.changed` | none | none | `stable` | Affliction priority changed. |
 | `nexsys4.def.priority.changed` | none | none | `stable` | Defence priority changed. |
 | `nexsys4.balance.timer.restarted` | none | none | `stable` | Balance loss timer was restarted without a state flip. |
-| `nexsys4.limb.decay` | none | none | `stable` | Limb damage counter reset after 3 minutes of no hits. |
 | `nexsys4.cache.precache.changed` | none | none | `stable` | Desired precache state changed. |
 | `nexsys4.queue.updated` | none | none | `stable` | Queue contents changed. |
 | `nexsys4.queue.flushed` | none | none | `stable` | Queue flush decision completed. |
@@ -112,14 +109,13 @@ External package authors should start with the
 | `nexsys4.queue.cleared` | none | none | `stable` | Queue contents were cleared. |
 | `nexsys4.serverside.dirty` | none | none | `stable` | Serverside reconciliation dirty flag changed. |
 | `nexsys4.serverside.evaluated` | none | none | `stable` | Serverside evaluation completed. |
-| `nexsys4.serverside.rule.changed` | none | none | `stable` | Legacy generic serverside rule-change signal reserved for compatibility. |
-| `nexsys4.rule.added` | none | none | `stable` | Serverside rule was added to the registry. |
-| `nexsys4.rule.removed` | none | none | `stable` | Serverside rule was removed from the registry. |
-| `nexsys4.rule.enabled` | none | none | `stable` | Serverside rule was enabled. |
-| `nexsys4.rule.disabled` | none | none | `stable` | Serverside rule was disabled. |
-| `nexsys4.rule.pack.loaded` | none | none | `stable` | Serverside rule pack was loaded. |
-| `nexsys4.rule.pack.unloaded` | none | none | `stable` | Serverside rule pack was unloaded. |
-| `nexsys4.rule.order.changed` | none | none | `stable` | Serverside rule evaluation order changed. |
+| `nexsys4.rule.added` | none | none | `stable` | Declarative rule was added to the general rule registry. |
+| `nexsys4.rule.removed` | none | none | `stable` | Declarative rule was removed from the general rule registry. |
+| `nexsys4.rule.enabled` | none | none | `stable` | Declarative rule was enabled. |
+| `nexsys4.rule.disabled` | none | none | `stable` | Declarative rule was disabled. |
+| `nexsys4.rule.pack.loaded` | none | none | `stable` | Declarative rule pack was loaded. |
+| `nexsys4.rule.pack.unloaded` | none | none | `stable` | Declarative rule pack was unloaded. |
+| `nexsys4.rule.order.changed` | none | none | `stable` | General rule evaluation order changed. |
 
 ## Internal-only topics
 

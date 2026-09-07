@@ -13,12 +13,12 @@ right now**.
 
 | Piece | What it is |
 | --- | --- |
-| **Action** | One ability: `{ id, queue, canExecute(ctx, tuning), execute(ctx, tuning) }`. `canExecute` is a pure yes/no gate; `execute` returns commands. |
+| **Action** | One ability: `{ id, queue, canExecute(ctx, tuning), execute(ctx, tuning), engagementTargets(ctx, tuning) }`. The first and last functions are pure; `execute` returns commands. |
 | **Lane** | A curated, ordered list of catalog keys. The order *is* the priority. Strategies have a `primary` lane and usually a `battlerage` lane. |
 | **Strategy** | A class expressed as data: its lanes plus optional profile-scoped shared args. See [Strategies](./strategies.md). |
 | **Context (`ctx`)** | A fresh per-tick bundle of tactical answers and player-state predicates. |
 | **Action tuning** | A precomputed `{ strategy, action }` envelope containing the active profile's two configuration scopes. |
-| **Selector** | The first-valid walk over a lane that produces the chosen action and its tuning. |
+| **Selector** | The first-valid walk over a lane that applies a pure eligibility predicate and produces the chosen action with its tuning. |
 
 ## The loop
 
@@ -32,9 +32,18 @@ On every prompt while in combat:
    the exact same tuning object and returns the commands to queue.
 5. If a coupled battlerage is ready, nexBash selects it through the same keyed
    tuning path and fuses it into the attack command stack.
+6. Immediately before queueing, nexBash unions every selected action's exact
+   `engagementTargets`, re-projects assistants against the latest room roster,
+   and queues only when the result is within `area.maxAttackers`.
 
 Autonomous battlerages run an independent first-valid pass when rage/freerage
 state changes. See [Battlerage](./battlerage.md).
+
+Ordinary primary and battlerage candidates use their action's `canExecute`
+gate. A cross-action track policy may supply another pure eligibility predicate
+to the same first-valid primitive. Maya spending uses this extension because it
+deliberately waives ordinary action-local tactical gates; ordering, keyed tuning,
+and decision tracing remain centralized rather than being reimplemented.
 
 :::note Execution machine
 The prompt and battlerage handlers run within the `combat` state of the core
@@ -76,16 +85,18 @@ to the hot path.
 
 ## The decision context
 
-`canExecute(ctx, tuning)` is the entire situational brain of an action, and it is
+`canExecute(ctx, tuning)` is the entire local situational brain of an action, and it is
 **pure**: it reads only the context and static tuning, never host globals, and has
 no side effects. The context is the adapter that reads nexSys, nexGui, GMCP, and
 the target model and turns them into answers.
 
 | Field | Meaning |
 | --- | --- |
-| `ctx.target` | Active target facts: `id`, `name`, `hp` (0-100%), `totalHp`, `shielded`, `shouldCC`, `cc`, `resistances`, `damageTypes`, and `canHeal`. |
-| `ctx.hasTarget` / `ctx.targetCount` | Whether a target exists and how many mobs are in the room. |
-| `ctx.aoeTargetIds` | Unshielded mob IDs available to multi-target abilities. |
+| `ctx.target` | Active target facts: `id`, `name`, `hp` (0-100%), `totalHp`, `shielded`, `aggro`, `canAssist`, `assistGroup`, `ccMinAttackers`, `threatLevel`, `cc`, `resistances`, `damageTypes`, and `canHeal`. |
+| `ctx.hasTarget` / `ctx.targetCount` | Whether a target exists and how many configured mobs are in the room. |
+| `ctx.attackerIds` / `ctx.attackerCount` / `ctx.maxAttackers` | Exact current attacker IDs, their count, and the active-area budget. |
+| `ctx.aoePlan` / `ctx.aoeTargetIds` | A prepared safe fixed-size AoE projection and its exact IDs, or no plan/IDs when unsafe — including whenever a `threatLevel` denizen is present. |
+| `ctx.room.threatLevel` | Highest `threatLevel` among attackable NPCs present; `0` when the room holds no focus threat. Distinct from `ctx.incomingThreat`, which is squint's *adjacent-room* danger scalar. |
 | `ctx.party` | Party `members`, `leader`, `size`, `isMember`, and `isLeader`. |
 | `ctx.enabled(key)` | Whether a catalog key belongs to an effective lane. |
 | `ctx.haveAff` / `ctx.haveAnyAff` / `ctx.haveDef` / `ctx.haveBal` / `ctx.isClass` | Player-state predicates delegated to nexSys4. |
@@ -94,7 +105,7 @@ the target model and turns them into answers.
 | `ctx.wielded` | The character's currently wielded items. |
 | `ctx.battlerage` | Battlerage balance, live flags, configured buffers, and `razeReady`. |
 | `ctx.room` | Environment answers such as `canFly`, `canBurrow`, and `fleeDirection`. |
-| `ctx.config` | Global player [options](./configuration/options.md) plus the active area's `targetThreshold`. |
+| `ctx.config` | Global player [options](./configuration/options.md) plus the active area's `maxAttackers`. |
 
 `ctx.config` remains the adapter for global options and active-area facts. It is
 not a strategy-profile configuration channel; those values belong in
@@ -116,10 +127,11 @@ nexBash.actionCatalog.get("magi.dissolution");
 
 ## Where rules fit
 
-nexBash does not use a per-tick rules engine to mutate priorities. The condition
-"use this ability only when these facts hold" lives directly in each pure gate,
-and first-valid resolves the ordered lane. A general rule registry exists as
-reserved infrastructure but is not wired into the runtime or public contract.
+nexBash does not use a per-tick rules engine to mutate priorities. Action-local
+conditions live in each action's pure gate; cross-action track policies live in
+the selection facade as pure eligibility predicates. First-valid resolves both
+against the ordered lane. A general rule registry exists as reserved
+infrastructure but is not wired into the runtime or public contract.
 
 ## Seeing why an action was chosen
 

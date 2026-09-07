@@ -42,11 +42,11 @@ with these buffers into `ctx.battlerage` each tick. See
 
 Settings live at
 `nexusclient.variables().vars.nexBash4Settings`. The current document is strict
-schema **v3**:
+schema **v4**:
 
 ```jsonc
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "updatedAt": "2026-07-11T12:00:00.000Z",
   "options": {
     "notices": true,
@@ -64,11 +64,17 @@ schema **v3**:
   "areas": {
     "id:137": {
       "areaKey": "id:137",
-      "id": 137,
-      "name": "Tuar",
+      "gameId": 137,
+      "gameName": "Tuar",
+      "maxAttackers": 99,
       "areaTargets": ["a tuar warrior", "a tuar shaman"],
       "npcs": {
-        "a tuar shaman": { "canShield": true, "shouldCC": true }
+        "a tuar shaman": {
+          "canShield": true,
+          "canAssist": false,
+          "assistGroup": null,
+          "ccMinAttackers": 1
+        }
       }
     }
   },
@@ -103,12 +109,16 @@ active.
 | Field | Meaning |
 | --- | --- |
 | `areaKey` | Stable identity derived from area ID or name. |
-| `id` / `name` | Scalar or list area identity. |
+| `gameId` / `gameName` | Scalar or list area identity. |
 | `areaTargets` | Ordered target names. |
 | `avoidTargets` | NPC names whose presence makes nexBash skip the room. |
 | `npcs` | Per-NPC combat overrides. See [Area Configuration](../guides/configuration/area-configuration.md). |
-| `targetThreshold` | Maximum targets before moving on. |
+| `maxAttackers` | Maximum projected exact attackers allowed. |
 | `route` / `stepDelay` / `startRoom` | Optional route, pacing, and entry-room data. |
+
+Per-NPC overrides include boolean combat facts, `resistances`/`damageTypes`,
+nonnegative integer `ccMinAttackers`, and nullable trimmed `assistGroup`. An
+explicit `null` assist group is preserved.
 
 ### Per-strategy fields
 
@@ -131,11 +141,14 @@ layers:
 
 1. A pure stored-input healer recognizes older or loose data one independent
    section at a time.
-2. The result must pass the one strict current v3 Zod schema before it is applied.
+2. The result must pass the one strict current v4 Zod schema before it is applied.
 
 The healer can:
 
 - coerce deliberately tolerated booleans such as `0` / `1`;
+- map the v3 NPC danger boolean to `ccMinAttackers` (`true` → `1`, `false` →
+  `0`) and the v3 room cap to `maxAttackers` only when the canonical field is
+  absent;
 - normalize scalar/list area fields and recover valid NPC overrides;
 - fold an older flat strategy delta into the `default` profile;
 - move the prior strategy `params` scope to current `args`;
@@ -145,7 +158,7 @@ The healer can:
 - discard unknown or irreconcilable fields.
 
 Legacy names stop at this I/O boundary. Zustand, runtime strategies, selection,
-and components know only v3.
+and components know only v4.
 
 ## Canonical rewrite
 

@@ -48,11 +48,15 @@ CC, general). Defaults are sensible; see [Options](../guides/configuration/optio
 
 ## 4. Check area configuration
 
-On **Area Configuration**, pick the area you intend to bash. On the **Area Settings** sub-tab, configure the target threshold and any avoid targets. On the **Target Priorities** sub-tab, targets are tried top-to-bottom. You can:
+On **Area Configuration**, pick the area you intend to bash. On the **Area
+Settings** sub-tab, configure the maximum projected attackers and any avoid
+targets. On the **Target Priorities** sub-tab, targets are tried top-to-bottom.
+You can:
 
 - Add an NPC by exact (case-sensitive) name, or pick one **From room**.
 - Drag to reorder the priority list.
-- Select a target and toggle its combat flags (can shield, can web, should CC, …).
+- Select a target and configure combat facts such as Can Assist, Assist Group,
+  and CC Minimum Attackers.
 
 Save when done.
 
@@ -82,8 +86,8 @@ While running, inspect a read-only snapshot in the console:
 
 ```js
 nexBash.state.system;   // { version, enabled }
-nexBash.state.area;     // { id, name, targetThreshold }
-nexBash.state.combat;   // { hasTarget, target, targetCount }
+nexBash.state.area;     // { gameId, gameName, maxAttackers, routeLength }
+nexBash.state.combat;   // { hasTarget, targetCount, attackerCount, attackerIds }
 nexBash.state.session;  // { kills, gold, elapsedMs }
 ```
 

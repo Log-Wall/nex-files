@@ -1,6 +1,6 @@
 ---
 title: Pathing & Travel settings
-description: Pathing mode, command separator, celerity, wing commands, and travel classes.
+description: Pathing mode, command separator, celerity, travel commands, and travel classes.
 ---
 
 # Pathing & Travel settings
@@ -21,10 +21,10 @@ travel methods pathfinding may use.
 See [Travel and pathing](../travel.md) for how the two modes execute the same
 computed route.
 
-## Commands
+## Travel Commands
 
-The spoken incantations sent for wing-based travel. Adjust them to match your
-character's abilities.
+The commands sent for configurable travel methods. Multi-command sequences use
+the separator configured under Pathing.
 
 ![The Pathing & Travel Commands sub-tab](../../assets/nexMap-config-pathing-travel-commands.png)
 
@@ -33,6 +33,10 @@ character's abilities.
 | Eagle Wings command | `say duanathar` |
 | Atavian Wings command | `say duanatharan` |
 | Island Wings command | `say duanatharic` |
+| Hourglass command | `touch hourglass` |
+
+For example, if the hourglass is stored in a pouch and the command separator is
+`\|`, set its command to `get hourglass from pouch\|touch hourglass`.
 
 ## Travel Options
 
@@ -54,6 +58,7 @@ methods your character can actually use.
 | Knocker | `knocker` |
 | Gare | `gare` |
 | Urn | `urn` |
+| Hourglass | `hourglass` |
 | Pebble | `pebble` |
 
 Most classes start **disabled** by default. The **Vibrating Stick** checkbox
@@ -64,6 +69,7 @@ You can flip the same toggles outside the dialog:
 ```text
 nm wormholes on
 nm clouds off
+nm hourglass on
 ```
 
 ```js

@@ -18,7 +18,7 @@ Functions are grouped by domain under `nexGui.api`. Data snapshots live under
 | `api.display`   | Display helpers (alias `api.colors`)               | `playerColor`, `iconHtml`, `notice`                               |
 | `api.timers`    | Timer bars                                         | `add`, `start`, `stop`, `reset`, `remove`, `clear`, `get`, `list` |
 | `api.customize` | Configured defences, class balance, native display | `defences.set`, `classBalance.set`, `nativeDisplay.mount`         |
-| `api.layout`    | Stored layout templates                            | `list`, `apply`, `save`, `restore`, `hasSaved`                    |
+| `api.layout`    | Named layout templates                             | `list`, `has`, `save`, `apply`, `remove`                          |
 | `api.party`     | Party membership                                   | `isMember`                                                        |
 | `api.room`      | Room display overrides and text replacements       | `items.set`, `npcs.set`, `replacements.set`                      |
 | `api.stream`    | System / Combat side streams                       | `add`                                                             |
@@ -115,13 +115,21 @@ The city palette lives at `nexGui.state.players.cityPalette`.
 
 ## `nexGui.api.layout`
 
-| Method       | Returns  | Notes                                                   |
-| ------------ | -------- | ------------------------------------------------------- |
-| `list()`     | string[] | Built-in layout preset ids.                             |
-| `apply(id)`  | boolean  | Applies a named preset. `false` when the id is unknown. |
-| `save()`     | boolean  | Saves the current layout to the stored slot.            |
-| `restore()`  | boolean  | Re-applies the saved layout. `false` when none exists.  |
-| `hasSaved()` | boolean  | Whether a saved layout exists.                          |
+Named layout templates, persisted in the `layouts` slice of `nexGui4Settings`.
+The `kDesktop` and `mobile` starters are seeded into the collection on first run
+and are ordinary entries afterwards — overwritable and deletable.
+
+Every method also announces its outcome as a nexGui notice, so aliases wired
+straight to these calls give the player feedback without reading the return
+value. Failures (missing name, unknown layout, full store) are noticed in red.
+
+| Method          | Returns  | Notes                                                                            |
+| --------------- | -------- | -------------------------------------------------------------------------------- |
+| `list()`        | string[] | Stored layout names, in insertion order.                                         |
+| `has(name)`     | boolean  | Whether a layout is stored under `name`.                                         |
+| `save(name)`    | boolean  | Snapshots the live layout, overwriting a same-named entry. `false` for a blank name or when the 20-layout limit is reached. |
+| `apply(name)`   | boolean  | Applies a stored layout. `false` when nothing matches `name`.                     |
+| `remove(name)`  | boolean  | Deletes a stored layout. `false` when none existed.                              |
 
 ## `nexGui.api.party`
 

@@ -44,6 +44,19 @@ at the end of the run, and surfaced on the `nexbash4.discovery.recorded` and
 [Area Configuration](./configuration/area-configuration.md) tab is where vetted
 NPC data is edited.
 
+## Area lifecycle automations
+
+Each registered area can persist ordered commands for two edges: **On
+activation** and **On deactivation**. Configure them under **Area Configuration
+→ Area Settings**. Activation commands run after the area's code-authored setup
+is live; deactivation commands run before its scoped resources are released.
+An explicit `nb clear` therefore runs both lists as part of the reload.
+
+These entries are intentionally command-only. Code belonging to another package
+should use the frozen `nexbash4.area.activated` and
+`nexbash4.area.deactivated` [events](../reference/events.md#area-lifecycle), so
+that package retains ownership of its listeners and cleanup.
+
 ## Safety and effect automations
 
 These run automatically based on your options and per-NPC flags.

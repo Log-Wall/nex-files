@@ -16,7 +16,7 @@ dispatch a command by id and return its result. Data snapshots remain under
 | Namespace | Purpose | Representative methods |
 | --- | --- | --- |
 | `api.travel` | Routing and travel-class toggles | `goto`, `toRoom`, `toArea`, `toLandmark`, `stop`, `planRoute`, `enable`, `disable`, `toggle`, `isEnabled` |
-| `api.map` | Map viewport and room reads | `showRoom`, `selectRoom`, `showArea`, `center`, `fit`, `zoom`, `refresh`, `roomInfo`, `getNode` |
+| `api.map` | Map viewport and room reads | `showRoom`, `selectRoom`, `showArea`, `center`, `fit`, `zoom`, `refresh`, `roomInfo`, `getNode`, `getOutgoingEdges` |
 | `api.landmarks` | Saved landmarks | `add`, `list`, `remove` |
 | `api.search` | Graph + denizen search | `rooms`, `area`, `areas`, `gameArea`, `denizens` |
 | `api.tracking` | Live subject overlays | `subject`, `clear`, `list` |
@@ -43,6 +43,7 @@ const plan = nexMap.api.travel.planRoute(315);
 nexMap.api.map.showArea(42, { fit: true });
 nexMap.api.map.zoom(1.5);
 nexMap.api.map.getNode(315);          // read a room record, no I/O
+nexMap.api.map.getOutgoingEdges(315); // read live materialized adjacency, no I/O
 
 // Landmarks
 nexMap.api.landmarks.add("home");
@@ -52,6 +53,18 @@ nexMap.api.landmarks.remove("home");
 nexMap.api.search.rooms("temple", { showResults: true });
 nexMap.api.search.denizens("Orinula", { showResults: true });
 ```
+
+## Map topology reads
+
+`api.map.getNode(roomId)` returns the canonical frozen room record, including its
+raw charted `exits`. `api.map.getOutgoingEdges(roomId)` returns the canonical
+materialized runtime edges leaving that room, including provisional observed
+topology such as Mnemosyne sonar edges. Both calls are synchronous and accept
+numeric or synthetic room ids; `getOutgoingEdges` returns `[]` when the room is
+unknown or has no outgoing edges.
+
+The edge list is a point-in-time caller-owned array whose entries are frozen
+canonical records. Query it again after runtime topology changes.
 
 ## Travel-class toggles
 
@@ -96,7 +109,7 @@ doesn't yet know.
 
 ## Return values and async
 
-- Read/predicate methods (`getNode`, `isEnabled`, …) return synchronously.
+- Read/predicate methods (`getNode`, `getOutgoingEdges`, `isEnabled`, …) return synchronously.
 - `planRoute` is guaranteed synchronous and returns a frozen plan or `null`.
 - Travel and search methods that touch the renderer or remote services may
   return a result object or a promise; do not assume a mutation is confirmed

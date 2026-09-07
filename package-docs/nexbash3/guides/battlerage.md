@@ -7,8 +7,9 @@ description: How nexBash4 spends battlerage — the rage lane, reserves, and cou
 
 Battlerage is a second, parallel decision track. Where the primary lane fires on
 each game prompt, the battlerage lane fires when your rage changes — and it uses
-the same first-valid selection over an ordered lane gated by pure `canExecute`
-checks (see [the decision model](./decision-model.md)).
+the same first-valid selection over an ordered lane. Ordinary candidates use
+pure `canExecute` checks; explicit track policies such as Maya use a specialized
+pure eligibility predicate (see [the decision model](./decision-model.md)).
 
 ## The rage lane
 
@@ -20,6 +21,7 @@ Action with extra metadata:
 | `rage` | The rage cost to use it. |
 | `cd` | Cooldown in seconds. |
 | `balance` | Whether it consumes battlerage balance. |
+| `damaging` | Whether it deals denizen health damage. Maya spending and Rage pulling use this explicit classification. |
 | `affliction` | The affliction it applies, if any. |
 | `combo` | Afflictions that must be present for a combo rage. |
 | `raze` | Whether it strips a shield. |
@@ -44,6 +46,10 @@ Set them on the [Options tab](./configuration/options.md):
 A reserve is a floor, not a cost: a rage in a category is only allowed to spend
 while your rage is above the matching reserve. These are read by the rage gates
 through `ctx.battlerage.{shieldBuffer, ccBuffer, generalBuffer}`.
+
+Crowd-control rages also require the active NPC's `ccMinAttackers` to be positive
+and the current exact `ctx.attackerCount` to have reached that minimum. This
+keeps an NPC's CC policy independent from the area's safety cap.
 
 ## Live battlerage state
 
@@ -71,6 +77,17 @@ A rage's `coupling` decides its timing:
   sensitivity opener use this so the attack lands into the new state.
 - **`auto`** — fires autonomously on a rage/freerage change, independent of the
   attack.
+
+Both tracks revalidate projected attackers at their queue boundary. A coupled
+rage and primary attack are checked as one union; an autonomous rage performs
+the same check on its own action. No rage command is queued when the latest room
+roster would put the engagement above `maxAttackers`.
+
+While Maya is available, the autonomous track stands down so the prompt-coupled
+track owns the single battlerage balance. It chooses the cheapest explicitly
+damaging ability in the active effective lane whose own cooldown is ready and
+whose actual Rage cost is affordable. Ordinary buffers and tactical action gates
+do not apply to this Maya spender.
 
 ## Rage and razing shields
 

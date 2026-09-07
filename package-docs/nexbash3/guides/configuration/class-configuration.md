@@ -65,9 +65,11 @@ shared strategy scope automatically if later added to a lane.
 
 ## How priority resolves
 
-Each decision tick, nexBash walks the lane top-to-bottom and uses the first action
-whose `canExecute(ctx, tuning)` gate passes. The chosen `execute` call receives
-the same precomputed tuning reference. See
+For ordinary lane decisions, nexBash walks the lane top-to-bottom and uses the
+first action whose `canExecute(ctx, tuning)` gate passes. Explicit cross-action
+track policies may provide a different pure eligibility rule—for example, Maya
+orders damaging battlerages by Rage cost and checks only mechanical availability.
+The chosen `execute` call receives the same precomputed tuning reference. See
 [The decision model](../decision-model.md).
 
 ## Saving and canceling

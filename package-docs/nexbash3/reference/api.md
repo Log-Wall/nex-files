@@ -12,17 +12,20 @@ lifecycle helpers and accessors also live directly on the global.
 
 | Namespace | Purpose | Methods |
 | --- | --- | --- |
-| `api.control` | Run lifecycle and run-control flags | `start`, `stop`, `enableLokiCheck` |
-| `api.config` | Area / NPC configuration | `setArea`, `addArea`, `addNpc` |
+| `api.control` | Manual run lifecycle and internal run-control mechanics | `start`, `stop`, `enableLokiCheck` |
+| `api.hunt` | Correlated, externally owned PvE executions | `start`, `stop`, `get`, `subscribe` |
+| `api.config` | Area / NPC configuration | `setArea`, `registerArea`, `addArea`, `addNpc` |
 | `api.observe` | Report observed game-state into the owned models | `npc.shield.*`, `npc.cc.*`, `self.effects.*`, `self.battlerage.*` |
 | `api.strategy` | Strategy profile management | `profiles.list`, `profiles.active`, `profiles.apply`, `profiles.save`, `profiles.remove` |
 | `api.diagnostics` | Read-only troubleshooting snapshots | `report` |
 
 ### `api.control`
 
-The single canonical lifecycle verbs. `start` and `stop` each flip the master
-`enabled` switch, toggle the in-game "Bashing" reflex group, and drive the bash
-actor — there is intentionally no separate enable/disable.
+The manual lifecycle verbs. `start` and `stop` each flip the master `enabled`
+switch, toggle the in-game "Bashing" reflex group, and drive the bash actor —
+there is intentionally no separate enable/disable. Package and routine
+automation must use `api.hunt`; `api.control` does not provide ownership,
+correlation, or scoped cancellation.
 
 ```js
 nexBash.api.control.start();        // resolve the area for this location, go live
@@ -33,11 +36,80 @@ nexBash.api.control.enableLokiCheck(); // arm a one-shot Loki affliction probe
 `start()` is a visible no-op with a notice when no area matches your location.
 `stop()` is silent when no run was active.
 
+### `api.hunt`
+
+`hunt` is the sole versioned automation boundary for a package that needs
+nexBash to perform PvE while retaining ownership of its own workflow. The caller supplies
+the objective, route, target names, and correlation identity; nexBash owns the
+temporary area lease, combat, safe route verification, progress, cancellation,
+and restoration of the player's normal area.
+
+```js
+const result = nexBash.api.hunt.start({
+  owner: {
+    package: "task-runner",
+    routineId: "task-runner:daily-clear",
+    invocationId: crypto.randomUUID(),
+  },
+  targets: ["a cave rat"],
+  route: [12001, 12002, 12003],
+  startRoom: 12001,
+  slow: true,
+  objective: { type: "killQuota", requiredKills: 5 },
+  onEvent(event) {
+    console.log(event.runId, event.type, event.progress);
+  },
+});
+
+if (result.ok) {
+  // Cancellation is correlated: a stale or foreign run id cannot stop it.
+  nexBash.api.hunt.stop({ runId: result.runId, reason: "callerCancelled" });
+}
+```
+
+The supported objectives are:
+
+- `{ type: "routeClear" }`: complete one normal route pass, and succeed only
+  when every unique route room was actually reported clear.
+- `{ type: "killQuota", requiredKills }`: count exact objective-target deaths
+  and repeat complete route passes after the respawn interval until the quota.
+
+The optional `slow` boolean selects slow-mode for this session and defaults to
+`false`; the prior setting is restored when the session finishes. The optional
+`respawnIntervalMs` is `10000` by default and accepts `100` through `60000`.
+The optional `area` may be a complete `Area` instance. Without it, the
+API resolves a registered area for the current location. Configured NPC metadata
+is preserved whenever available. A requested target missing from that area gets
+the standard `new Npc()` defaults on the session's transient clone. If the
+location has no registered area, nexBash builds a transient area from the current
+GMCP identity, requested targets, and route. These inferred definitions are
+never registered or persisted.
+
+`start()` returns either `{ ok: true, runId, unsubscribe, snapshot }` or a
+structured rejection. Only one normal run or hunt session may own nexBash at a
+time. `get(runId)` returns a frozen active or recently completed snapshot.
+`subscribe(runId, fn)` attaches an additional run-scoped listener and returns an
+unsubscribe function. The callback and `nexbash4.hunt.*` topics carry the same
+correlated event shapes.
+
+Feature detection is explicit:
+
+```js
+nexBash.capabilities.huntSession;          // "1.1.0"
+nexBash.api.hunt.version;                  // "1.1.0"
+nexBash.api.hunt.capabilities.objectives;  // ["killQuota", "routeClear"]
+nexBash.api.hunt.capabilities.slowMode;    // true
+nexBash.api.hunt.capabilities.transientNpcDefaults; // true
+```
+
 ### `api.config`
 
 ```js
 // Make a ready-made Area instance the live bashing area (runs its lifecycle).
 nexBash.api.config.setArea(areaInstance);
+
+// Add a complete Area definition to the runtime catalog without activating it.
+nexBash.api.config.registerArea(areaInstance, { replace: false });
 
 // Register the current GMCP area as a new (empty) area definition and persist it.
 nexBash.api.config.addArea();
@@ -46,9 +118,19 @@ nexBash.api.config.addArea();
 nexBash.api.config.addNpc("a Nelbennir alchemist");
 ```
 
-`setArea` is the programmatic entry point other packages (e.g. quest areas) use
-to drive nexBash through an `Area` they built; ephemeral areas passed this way
-are not added to `nexBash.areas`.
+`setArea` is the programmatic entry point for driving nexBash through an `Area`
+built by a caller; ephemeral areas passed this way
+are not added to `nexBash.areas`. It returns `true` when the Area crossed the
+ownership boundary and `false` for invalid input or a re-entrant transition.
+The replacement emits `nexbash4.area.deactivated`, `.activated`, and one final
+`.changed` event with `reason: "api"`; integrations should subscribe to those
+events instead of adding callbacks to the Area instance.
+
+`registerArea` accepts a complete `Area`, clones it into the runtime catalog,
+and returns `{ ok, added, area }`. Identity is the canonical game area id/name.
+An existing definition is retained unless `{ replace: true }` is explicit. This
+is the generic extension point for private catalogs and independently shipped
+area providers; registration does not activate the area or start combat.
 
 ### `api.observe`
 
@@ -104,7 +186,7 @@ const report = nexBash.api.diagnostics.report();
 
 `report()` prints one JSON block to the developer console and returns the same
 structured object. It correlates the run machine, room/area matching, target
-priorities and thresholds, strategy/profile lanes, action gates, offence
+priorities, exact attacker projections and budgets, strategy/profile lanes, action gates, offence
 blockers, integrations, and persisted-settings schema. It does not modify live
 state. Character and player names are omitted; NPC names and item/target IDs are
 included because they are needed to diagnose exact-name and targeting failures.

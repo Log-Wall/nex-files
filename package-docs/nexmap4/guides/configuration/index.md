@@ -23,7 +23,7 @@ map as you drag, and reverts if you cancel.
 
 | Tab | Purpose |
 | --- | --- |
-| [Pathing & Travel](./pathing-travel.md) | Pathing mode, command separator, celerity, wing commands, and travel-class toggles |
+| [Pathing & Travel](./pathing-travel.md) | Pathing mode, command separator, celerity, travel commands, and travel-class toggles |
 | [Display](./display.md) | Current-room style, room labels, zoom, background image, notices, and border indicators |
 | [City Lockouts](./city-lockouts.md) | Exclude hostile city gate rooms (and arbitrary rooms) from pathing |
 
@@ -38,7 +38,7 @@ JSON-serializable settings document accessible through `nexMap.settings`:
 | `commandSeparator` | string | Separator used to join batched commands. Default `\|`. |
 | `celerity` | number (1–5) | Movement-cost multiplier when celerity is active. Default `2`. |
 | `disabledTravelClasses` | string[] | Travel classes excluded from pathing. |
-| `travelCommands` | object | Spoken commands for `eagleWings`, `atavianWings`, `islandWings`. |
+| `travelCommands` | object | Commands for `eagleWings`, `atavianWings`, `islandWings`, and `hourglass`. |
 | `display` | object | All [Display](./display.md) settings. |
 | `excludedRoomIds` | number[] | Rooms (incl. city gates) pathing must avoid. |
 | `landmarks` | object[] | Saved [landmarks](../landmarks.md). |
